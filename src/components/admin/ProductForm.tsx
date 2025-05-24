@@ -23,7 +23,7 @@ interface ProductFormData {
 }
 
 interface ProductFormProps {
-  initialData?: Partial<ProductFormData>;
+  initialData?: Partial<ProductFormData> | null;
   onSubmit: (data: ProductFormData) => void;
   onCancel: () => void;
   isLoading?: boolean;
@@ -38,23 +38,23 @@ const tiposPet = [
 ];
 
 export const ProductForm: React.FC<ProductFormProps> = ({
-  initialData = {},
+  initialData = null,
   onSubmit,
   onCancel,
   isLoading = false
 }) => {
   const [formData, setFormData] = useState<ProductFormData>({
-    nome: initialData.nome || '',
-    descricao: initialData.descricao || '',
-    preco: initialData.preco || 0,
-    categoria: initialData.categoria || '',
-    marca: initialData.marca || '',
-    peso: initialData.peso || 0.5,
-    estoque: initialData.estoque || 0,
-    ativo: initialData.ativo !== undefined ? initialData.ativo : true,
-    tipo_pet: initialData.tipo_pet || '',
-    dimensoes: initialData.dimensoes || '',
-    imagens: initialData.imagens || []
+    nome: initialData?.nome || '',
+    descricao: initialData?.descricao || '',
+    preco: initialData?.preco || 0,
+    categoria: initialData?.categoria || '',
+    marca: initialData?.marca || '',
+    peso: initialData?.peso || 0.5,
+    estoque: initialData?.estoque || 0,
+    ativo: initialData?.ativo !== undefined ? initialData.ativo : true,
+    tipo_pet: initialData?.tipo_pet || '',
+    dimensoes: initialData?.dimensoes || '',
+    imagens: initialData?.imagens || []
   });
 
   const [imagemUrl, setImagemUrl] = useState('');
@@ -84,7 +84,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{initialData.nome ? 'Editar Produto' : 'Novo Produto'}</CardTitle>
+        <CardTitle>{initialData?.nome ? 'Editar Produto' : 'Novo Produto'}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
