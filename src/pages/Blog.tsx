@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import BlogCard from '@/components/blog/BlogCard';
@@ -9,12 +8,12 @@ import { Search, Filter } from 'lucide-react';
 import { useBlog } from '@/hooks/useBlog';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
-// Local interface that matches our component needs
+// Local interface that matches our component needs and BlogCard requirements
 interface BlogPost {
   id: string;
   titulo: string;
   conteudo: string;
-  resumo?: string;
+  resumo: string; // Made required to match BlogCard expectations
   imagem_url?: string;
   categoria?: string;
   autor?: string;
