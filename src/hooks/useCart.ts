@@ -207,9 +207,42 @@ export const useCart = () => {
     return getCartItemsCount();
   };
 
+  const syncCart = () => {
+    console.log('Sincronizando carrinho...');
+    fetchCartItems();
+  };
+
   useEffect(() => {
     if (user) {
       fetchCartItems();
+
+      // Configurar sincronização em tempo real do carrinho
+      const channel = supabase
+        .channel('cart-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'carrinho',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('Carrinho atualizado:', payload);
+            fetchCartItems(); // Recarregar dados quando houver mudanças
+          }
+        )
+        .subscribe();
+
+      // Sincronização automática a cada 2 minutos
+      const syncInterval = setInterval(() => {
+        syncCart();
+      }, 2 * 60 * 1000); // 2 minutos
+
+      return () => {
+        supabase.removeChannel(channel);
+        clearInterval(syncInterval);
+      };
     } else {
       setCartItems([]);
     }
@@ -225,6 +258,7 @@ export const useCart = () => {
     getCartTotal,
     getCartItemsCount,
     getCartItemCount,
-    fetchCartItems
+    fetchCartItems,
+    syncCart
   };
 };
