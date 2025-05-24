@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Package, Calendar, Settings, BarChart } from 'lucide-react';
+import { ArrowLeft, Package, Calendar, Settings, BarChart, ShoppingCart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { AdminRoute } from '@/components/admin/AdminRoute';
@@ -11,6 +11,7 @@ import { DashboardStats } from '@/components/admin/DashboardStats';
 import { ProductsManager } from '@/components/admin/ProductsManager';
 import { ServicesManager } from '@/components/admin/ServicesManager';
 import { AppointmentsManager } from '@/components/admin/AppointmentsManager';
+import { OrdersManager } from '@/components/admin/OrdersManager';
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -26,13 +27,22 @@ const Admin = () => {
     switch (action) {
       case 'add-product':
         setActiveTab('products');
+        // Trigger para abrir form de novo produto
+        setTimeout(() => {
+          const event = new CustomEvent('openProductForm');
+          window.dispatchEvent(event);
+        }, 100);
         break;
       case 'new-appointment':
         setActiveTab('appointments');
+        // Trigger para abrir form de novo agendamento
+        setTimeout(() => {
+          const event = new CustomEvent('openAppointmentForm');
+          window.dispatchEvent(event);
+        }, 100);
         break;
       case 'view-orders':
-        // Implementar quando houver aba de pedidos
-        console.log('Ver pedidos - funcionalidade em desenvolvimento');
+        setActiveTab('orders');
         break;
       default:
         break;
@@ -72,7 +82,7 @@ const Admin = () => {
 
         <div className="container mx-auto px-4 py-8">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-8 bg-white/95 backdrop-blur-sm border border-slate-200 shadow-md rounded-xl p-1">
+            <TabsList className="grid w-full grid-cols-5 mb-8 bg-white/95 backdrop-blur-sm border border-slate-200 shadow-md rounded-xl p-1">
               <TabsTrigger 
                 value="dashboard" 
                 className="flex items-center space-x-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-slate-700 hover:bg-green-50 hover:text-green-700 transition-all duration-200 rounded-lg font-medium"
@@ -100,6 +110,13 @@ const Admin = () => {
               >
                 <Calendar className="w-4 h-4" />
                 <span>Agendamentos</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="orders" 
+                className="flex items-center space-x-2 data-[state=active]:bg-indigo-600 data-[state=active]:text-white text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-all duration-200 rounded-lg font-medium"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                <span>Pedidos</span>
               </TabsTrigger>
             </TabsList>
 
@@ -179,6 +196,10 @@ const Admin = () => {
 
             <TabsContent value="appointments">
               <AppointmentsManager />
+            </TabsContent>
+
+            <TabsContent value="orders">
+              <OrdersManager />
             </TabsContent>
           </Tabs>
         </div>

@@ -60,9 +60,21 @@ export const ServicesManager = () => {
 
   const handleCreateService = async () => {
     try {
+      // Gerar um novo código único
+      const { data: maxService } = await supabase
+        .from('Servico')
+        .select('cdServico')
+        .order('cdServico', { ascending: false })
+        .limit(1);
+
+      const newCdServico = maxService && maxService.length > 0 ? maxService[0].cdServico + 1 : 1;
+
       const { error } = await supabase
         .from('Servico')
-        .insert([formData]);
+        .insert([{
+          cdServico: newCdServico,
+          ...formData
+        }]);
 
       if (error) throw error;
 
@@ -162,7 +174,7 @@ export const ServicesManager = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-white">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-slate-800">Gerenciar Serviços</h2>
         <Button onClick={openCreateForm} className="bg-green-600 hover:bg-green-700 text-white">
@@ -172,7 +184,7 @@ export const ServicesManager = () => {
       </div>
 
       <Card className="bg-white border-slate-200 shadow-lg">
-        <CardHeader className="bg-slate-50 border-b border-slate-200">
+        <CardHeader className="bg-white border-b border-slate-200">
           <div className="flex items-center space-x-2">
             <Search className="w-4 h-4 text-slate-500" />
             <Input
@@ -183,7 +195,7 @@ export const ServicesManager = () => {
             />
           </div>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 bg-white">
           {loading ? (
             <div className="flex justify-center py-8">
               <LoadingSpinner />
@@ -238,7 +250,7 @@ export const ServicesManager = () => {
 
       {/* Dialog para criar/editar serviço */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] bg-white">
           <DialogHeader>
             <DialogTitle>
               {editingService ? 'Editar Serviço' : 'Novo Serviço'}
@@ -256,7 +268,7 @@ export const ServicesManager = () => {
                 id="name"
                 value={formData.dsServico}
                 onChange={(e) => setFormData(prev => ({ ...prev, dsServico: e.target.value }))}
-                className="col-span-3"
+                className="col-span-3 bg-white"
                 placeholder="Nome do serviço"
               />
             </div>
@@ -271,7 +283,7 @@ export const ServicesManager = () => {
                 min="0"
                 value={formData.vrServico}
                 onChange={(e) => setFormData(prev => ({ ...prev, vrServico: parseFloat(e.target.value) || 0 }))}
-                className="col-span-3"
+                className="col-span-3 bg-white"
                 placeholder="0.00"
               />
             </div>

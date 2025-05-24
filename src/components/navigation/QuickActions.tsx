@@ -29,7 +29,7 @@ export const QuickActions = () => {
       icon: Phone,
       label: 'Entrar em Contato',
       description: 'Tire suas dúvidas conosco',
-      onClick: () => window.open('https://wa.me/5511999999999?text=Olá! Gostaria de mais informações sobre os serviços do PetShop Canabrava.', '_blank'),
+      onClick: () => window.open('https://wa.me/5571997227741?text=Olá! Gostaria de mais informações sobre os serviços do PetShop Canabrava.', '_blank'),
       colorClass: 'bg-orange-500 hover:bg-orange-600',
       bgClass: 'hover:bg-orange-50'
     },

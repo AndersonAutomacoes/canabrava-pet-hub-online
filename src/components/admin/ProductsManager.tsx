@@ -53,11 +53,13 @@ export const ProductsManager = () => {
 
   if (showForm) {
     return (
-      <ProductForm
-        initialData={editingProduct}
-        onSubmit={editingProduct ? handleUpdateProduct : handleCreateProduct}
-        onCancel={handleCancel}
-      />
+      <div className="min-h-screen bg-white">
+        <ProductForm
+          initialData={editingProduct}
+          onSubmit={editingProduct ? handleUpdateProduct : handleCreateProduct}
+          onCancel={handleCancel}
+        />
+      </div>
     );
   }
 
@@ -72,18 +74,18 @@ export const ProductsManager = () => {
       </div>
 
       <Card className="bg-white border-slate-200 shadow-lg">
-        <CardHeader className="bg-slate-50 border-b border-slate-200">
+        <CardHeader className="bg-white border-b border-slate-200">
           <div className="flex items-center space-x-2">
             <Search className="w-4 h-4 text-slate-500" />
             <Input
               placeholder="Buscar produtos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm border-slate-300 focus:border-green-500 focus:ring-green-500"
+              className="max-w-sm bg-white border-slate-300 focus:border-green-500 focus:ring-green-500"
             />
           </div>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 bg-white">
           {loading ? (
             <div className="flex justify-center py-8">
               <LoadingSpinner />

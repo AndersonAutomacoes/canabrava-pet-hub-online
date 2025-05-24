@@ -41,19 +41,19 @@ const Footer = () => {
           <div className="space-y-4">
             <h4 className="text-lg font-semibold mb-6">Links Rápidos</h4>
             <div className="space-y-3">
-              <a href="#home" className="block text-gray-300 hover:text-green-400 transition-colors">
+              <a href="/" className="block text-gray-300 hover:text-green-400 transition-colors">
                 Início
               </a>
-              <a href="#services" className="block text-gray-300 hover:text-green-400 transition-colors">
+              <a href="/#services" className="block text-gray-300 hover:text-green-400 transition-colors">
                 Serviços
               </a>
-              <a href="#products" className="block text-gray-300 hover:text-green-400 transition-colors">
+              <a href="/produtos" className="block text-gray-300 hover:text-green-400 transition-colors">
                 Produtos
               </a>
-              <a href="#blog" className="block text-gray-300 hover:text-green-400 transition-colors">
+              <a href="/#blog" className="block text-gray-300 hover:text-green-400 transition-colors">
                 Blog
               </a>
-              <a href="#about" className="block text-gray-300 hover:text-green-400 transition-colors">
+              <a href="/#about" className="block text-gray-300 hover:text-green-400 transition-colors">
                 Sobre Nós
               </a>
             </div>
@@ -84,7 +84,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="w-5 h-5 text-green-400" />
-                <p className="text-gray-300">(11) 99999-9999</p>
+                <p className="text-gray-300">(71) 99722-7741</p>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-green-400" />
@@ -131,6 +131,7 @@ const Footer = () => {
           size="lg" 
           className="bg-green-500 hover:bg-green-600 rounded-full w-14 h-14 shadow-lg animate-pulse"
           title="Fale conosco no WhatsApp"
+          onClick={() => window.open('https://wa.me/5571997227741?text=Olá! Gostaria de mais informações sobre os serviços do PetShop Canabrava.', '_blank')}
         >
           <span className="text-2xl">💬</span>
         </Button>

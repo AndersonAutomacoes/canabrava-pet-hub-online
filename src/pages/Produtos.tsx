@@ -154,8 +154,8 @@ const Produtos = () => {
   const filteredProdutos = produtos.filter(produto => {
     const matchesSearch = produto.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          produto.descricao?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !selectedCategory || produto.categoria === selectedCategory;
-    const matchesTipoPet = !selectedTipoPet || produto.tipo_pet === selectedTipoPet || produto.tipo_pet === 'todos';
+    const matchesCategory = !selectedCategory || selectedCategory === 'all' || produto.categoria === selectedCategory;
+    const matchesTipoPet = !selectedTipoPet || selectedTipoPet === 'all' || produto.tipo_pet === selectedTipoPet || produto.tipo_pet === 'todos';
     
     return matchesSearch && matchesCategory && matchesTipoPet;
   });
@@ -205,7 +205,7 @@ const Produtos = () => {
           </SelectContent>
         </Select>
         
-        <div className="text-sm text-gray-600 flex items-center justify-center bg-gray-50 rounded-lg px-4">
+        <div className="text-sm text-gray-600 flex items-center justify-center bg-white rounded-lg px-4 border border-gray-300">
           {filteredProdutos.length} produto(s) encontrado(s)
         </div>
       </div>
@@ -283,8 +283,8 @@ const Produtos = () => {
           action={
             <Button onClick={() => {
               setSearchTerm('');
-              setSelectedCategory('');
-              setSelectedTipoPet('');
+              setSelectedCategory('all');
+              setSelectedTipoPet('all');
             }}>
               Limpar Filtros
             </Button>
