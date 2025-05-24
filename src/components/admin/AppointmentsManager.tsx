@@ -65,64 +65,64 @@ export const AppointmentsManager = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Gerenciar Agendamentos</h2>
-        <Button className="bg-green-600 hover:bg-green-700">
+        <h2 className="text-2xl font-bold text-slate-800">Gerenciar Agendamentos</h2>
+        <Button className="bg-green-600 hover:bg-green-700 text-white">
           <Calendar className="w-4 h-4 mr-2" />
           Novo Agendamento
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
+      <Card className="bg-white border-slate-200 shadow-lg">
+        <CardHeader className="bg-slate-50 border-b border-slate-200">
           <div className="flex items-center space-x-2">
-            <Search className="w-4 h-4" />
+            <Search className="w-4 h-4 text-slate-500" />
             <Input
               placeholder="Buscar por pet, serviço ou telefone..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
+              className="max-w-sm border-slate-300 focus:border-green-500 focus:ring-green-500"
             />
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {loading ? (
-            <div className="flex justify-center">
+            <div className="flex justify-center py-8">
               <LoadingSpinner />
             </div>
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Data/Hora</TableHead>
-                  <TableHead>Pet</TableHead>
-                  <TableHead>Serviço</TableHead>
-                  <TableHead>Telefone</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Ações</TableHead>
+                <TableRow className="bg-slate-100 border-b border-slate-200 hover:bg-slate-100">
+                  <TableHead className="text-slate-700 font-semibold">Data/Hora</TableHead>
+                  <TableHead className="text-slate-700 font-semibold">Pet</TableHead>
+                  <TableHead className="text-slate-700 font-semibold">Serviço</TableHead>
+                  <TableHead className="text-slate-700 font-semibold">Telefone</TableHead>
+                  <TableHead className="text-slate-700 font-semibold">Status</TableHead>
+                  <TableHead className="text-slate-700 font-semibold">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredAppointments.map((appointment) => (
-                  <TableRow key={appointment.cdAgendamento}>
-                    <TableCell>
+                  <TableRow key={appointment.cdAgendamento} className="border-b border-slate-100 hover:bg-slate-50">
+                    <TableCell className="text-slate-700">
                       {appointment.dtStart ? formatDate(appointment.dtStart) : 'N/A'}
                     </TableCell>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium text-slate-800">
                       {appointment.nmPet || 'N/A'}
                     </TableCell>
-                    <TableCell>{appointment.dsServico || 'N/A'}</TableCell>
-                    <TableCell>{appointment.nuTelefoneWhatsapp || 'N/A'}</TableCell>
+                    <TableCell className="text-slate-700">{appointment.dsServico || 'N/A'}</TableCell>
+                    <TableCell className="text-slate-700">{appointment.nuTelefoneWhatsapp || 'N/A'}</TableCell>
                     <TableCell>
-                      <Badge variant={appointment.flComparecimento ? "default" : "secondary"}>
+                      <Badge variant={appointment.flComparecimento ? "default" : "secondary"} className={appointment.flComparecimento ? "bg-green-100 text-green-800 border-green-200" : "bg-gray-100 text-gray-600 border-gray-200"}>
                         {appointment.flComparecimento ? 'Compareceu' : 'Pendente'}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" className="border-green-300 text-green-700 hover:bg-green-50">
                           <CheckCircle className="w-4 h-4" />
                         </Button>
-                        <Button variant="destructive" size="sm">
+                        <Button variant="destructive" size="sm" className="bg-red-600 hover:bg-red-700">
                           <XCircle className="w-4 h-4" />
                         </Button>
                       </div>
