@@ -600,6 +600,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_services: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       check_is_admin: {
         Args: { check_user_id?: string }
         Returns: boolean

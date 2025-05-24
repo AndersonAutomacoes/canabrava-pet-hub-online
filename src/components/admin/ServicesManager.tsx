@@ -43,16 +43,21 @@ export const ServicesManager = () => {
 
       if (error) {
         console.error('Erro ao buscar serviços:', error);
-        throw error;
+        toast({
+          title: "Erro",
+          description: `Erro ao carregar serviços: ${error.message}`,
+          variant: "destructive",
+        });
+        return;
       }
       
       console.log('Serviços encontrados:', data);
       setServices(data || []);
     } catch (error) {
-      console.error('Erro ao buscar serviços:', error);
+      console.error('Erro inesperado ao buscar serviços:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível carregar os serviços.",
+        description: "Erro inesperado ao carregar os serviços.",
         variant: "destructive",
       });
     } finally {
@@ -87,19 +92,11 @@ export const ServicesManager = () => {
 
       if (error) {
         console.error('Erro ao criar serviço:', error);
-        if (error.code === '42501') {
-          toast({
-            title: "Erro de permissão",
-            description: "Você não tem permissão para criar serviços. Verifique se você é um administrador.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Erro",
-            description: `Erro ao criar serviço: ${error.message}`,
-            variant: "destructive",
-          });
-        }
+        toast({
+          title: "Erro",
+          description: `Erro ao criar serviço: ${error.message}`,
+          variant: "destructive",
+        });
         return;
       }
 
@@ -112,10 +109,10 @@ export const ServicesManager = () => {
       setFormData({ dsservico: '', vrservico: 0, cdempresa: 1 });
       fetchServices();
     } catch (error) {
-      console.error('Erro ao criar serviço:', error);
+      console.error('Erro inesperado ao criar serviço:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível criar o serviço.",
+        description: "Erro inesperado ao criar o serviço.",
         variant: "destructive",
       });
     }
@@ -146,19 +143,11 @@ export const ServicesManager = () => {
 
       if (error) {
         console.error('Erro ao atualizar serviço:', error);
-        if (error.code === '42501') {
-          toast({
-            title: "Erro de permissão",
-            description: "Você não tem permissão para atualizar serviços.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Erro",
-            description: `Erro ao atualizar serviço: ${error.message}`,
-            variant: "destructive",
-          });
-        }
+        toast({
+          title: "Erro",
+          description: `Erro ao atualizar serviço: ${error.message}`,
+          variant: "destructive",
+        });
         return;
       }
 
@@ -172,10 +161,10 @@ export const ServicesManager = () => {
       setFormData({ dsservico: '', vrservico: 0, cdempresa: 1 });
       fetchServices();
     } catch (error) {
-      console.error('Erro ao atualizar serviço:', error);
+      console.error('Erro inesperado ao atualizar serviço:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível atualizar o serviço.",
+        description: "Erro inesperado ao atualizar o serviço.",
         variant: "destructive",
       });
     }
@@ -193,19 +182,11 @@ export const ServicesManager = () => {
 
       if (error) {
         console.error('Erro ao excluir serviço:', error);
-        if (error.code === '42501') {
-          toast({
-            title: "Erro de permissão",
-            description: "Você não tem permissão para excluir serviços.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Erro",
-            description: `Erro ao excluir serviço: ${error.message}`,
-            variant: "destructive",
-          });
-        }
+        toast({
+          title: "Erro",
+          description: `Erro ao excluir serviço: ${error.message}`,
+          variant: "destructive",
+        });
         return;
       }
 
@@ -216,10 +197,10 @@ export const ServicesManager = () => {
 
       fetchServices();
     } catch (error) {
-      console.error('Erro ao excluir serviço:', error);
+      console.error('Erro inesperado ao excluir serviço:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível excluir o serviço.",
+        description: "Erro inesperado ao excluir o serviço.",
         variant: "destructive",
       });
     }
@@ -327,7 +308,6 @@ export const ServicesManager = () => {
         </CardContent>
       </Card>
 
-      {/* Dialog para criar/editar serviço */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="sm:max-w-[425px] bg-blue-50 border border-blue-300">
           <DialogHeader>
