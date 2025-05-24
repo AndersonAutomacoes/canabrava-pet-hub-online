@@ -6,29 +6,39 @@ import CheckoutFlow from '@/components/CheckoutFlow';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ShieldCheck, Lock } from 'lucide-react';
 
 const Checkout = () => {
   const { user } = useAuth();
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-green-50">
+      <div className="min-h-screen pet-gradient-bg">
         <Header />
-        <div className="container mx-auto px-4 py-8">
-          <Card className="max-w-md mx-auto">
-            <CardHeader>
-              <CardTitle>Login Necessário</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4">Para finalizar sua compra, você precisa estar logado.</p>
-              <Button 
-                className="w-full bg-green-600 hover:bg-green-700" 
-                onClick={() => window.location.href = '/auth'}
-              >
-                Fazer Login
-              </Button>
-            </CardContent>
-          </Card>
+        <div className="pet-container py-12">
+          <div className="max-w-md mx-auto">
+            <Card className="pet-card border-0 shadow-medium">
+              <CardHeader className="text-center pb-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Lock className="w-8 h-8 text-white" />
+                </div>
+                <CardTitle className="text-xl text-gray-800">
+                  Login Necessário
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <p className="text-gray-600 mb-6">
+                  Para finalizar sua compra de forma segura, você precisa estar logado em sua conta.
+                </p>
+                <Button 
+                  className="w-full pet-button-primary h-12 text-base"
+                  onClick={() => window.location.href = '/auth'}
+                >
+                  Fazer Login
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </div>
         <Footer />
       </div>
@@ -36,15 +46,25 @@ const Checkout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-green-50">
+    <div className="min-h-screen pet-gradient-bg">
       <Header />
       
-      <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">
-          Finalizar Compra
-        </h1>
-        
-        <CheckoutFlow />
+      <main className="pet-container py-8 lg:py-12">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center mb-4">
+              <ShieldCheck className="w-8 h-8 text-green-600 mr-3" />
+              <h1 className="text-3xl lg:text-4xl font-bold text-gray-800 gradient-text">
+                Finalizar Compra
+              </h1>
+            </div>
+            <p className="text-gray-600 text-lg">
+              Ambiente seguro e protegido para finalizar seu pedido
+            </p>
+          </div>
+          
+          <CheckoutFlow />
+        </div>
       </main>
       
       <Footer />
