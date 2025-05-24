@@ -190,7 +190,7 @@ const Products = () => {
                   </div>
                   <div className="text-right">
                     <div className="flex items-center space-x-1">
-                      <Star className="w-4 h-4 fill-orange-400 text-orange-400" />
+                      <Star className="w-4 h-4 fill-teal-400 text-teal-400" />
                       <span className="text-sm font-semibold text-gray-700">{product.rating}</span>
                     </div>
                     <div className="text-xs text-gray-500">

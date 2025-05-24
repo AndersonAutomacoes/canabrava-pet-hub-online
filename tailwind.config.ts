@@ -63,7 +63,7 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Pet-friendly color palette
+				// Pet-friendly color palette without yellow
 				'pet-green': {
 					50: 'rgb(240 253 244)',
 					100: 'rgb(220 252 231)',
@@ -111,6 +111,18 @@ export default {
 					700: 'rgb(194 65 12)',
 					800: 'rgb(154 52 18)',
 					900: 'rgb(124 45 18)',
+				},
+				'pet-teal': {
+					50: 'rgb(240 253 250)',
+					100: 'rgb(204 251 241)',
+					200: 'rgb(153 246 228)',
+					300: 'rgb(94 234 212)',
+					400: 'rgb(45 212 191)',
+					500: 'rgb(20 184 166)',
+					600: 'rgb(13 148 136)',
+					700: 'rgb(15 118 110)',
+					800: 'rgb(17 94 89)',
+					900: 'rgb(19 78 74)',
 				}
 			},
 			borderRadius: {
