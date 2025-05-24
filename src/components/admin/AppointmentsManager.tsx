@@ -18,14 +18,14 @@ interface Appointment {
   dtStart: string;
   cdCliente: number;
   flComparecimento: boolean;
-  dsServico: string;
-  nmPet: string;
-  nuTelefoneWhatsapp: string;
+  dsServico?: string;
+  nmPet?: string;
+  nuTelefoneWhatsapp?: string;
 }
 
 interface Service {
-  cdServico: number;
-  dsServico: string;
+  cdservico: number;
+  dsservico: string;
 }
 
 export const AppointmentsManager = () => {
@@ -37,7 +37,7 @@ export const AppointmentsManager = () => {
   const [formData, setFormData] = useState({
     dtStart: '',
     dtEnd: '',
-    cdServico: '',
+    cdservico: '',
     nmPet: '',
     nuTelefoneWhatsapp: ''
   });
@@ -47,7 +47,7 @@ export const AppointmentsManager = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('consultaagendamentopet')
+        .from('Agendamento')
         .select('*')
         .order('dtStart', { ascending: false });
 
@@ -68,9 +68,9 @@ export const AppointmentsManager = () => {
   const fetchServices = async () => {
     try {
       const { data, error } = await supabase
-        .from('Servico')
-        .select('cdServico, dsServico')
-        .order('dsServico');
+        .from('servico')
+        .select('cdservico, dsservico')
+        .order('dsservico');
 
       if (error) throw error;
       setServices(data || []);
@@ -96,7 +96,7 @@ export const AppointmentsManager = () => {
           cdEmpresa: 1,
           cdCliente: 1,
           cdPet: 1,
-          cdServico: parseInt(formData.cdServico),
+          cdServico: parseInt(formData.cdservico),
           dtStart: startDateTime.toISOString(),
           dtEnd: endDateTime.toISOString(),
         }]);
@@ -112,7 +112,7 @@ export const AppointmentsManager = () => {
       setFormData({
         dtStart: '',
         dtEnd: '',
-        cdServico: '',
+        cdservico: '',
         nmPet: '',
         nuTelefoneWhatsapp: ''
       });
@@ -131,7 +131,7 @@ export const AppointmentsManager = () => {
     setFormData({
       dtStart: '',
       dtEnd: '',
-      cdServico: '',
+      cdservico: '',
       nmPet: '',
       nuTelefoneWhatsapp: ''
     });
@@ -222,7 +222,6 @@ export const AppointmentsManager = () => {
         </CardContent>
       </Card>
 
-      {/* Dialog para criar agendamento */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -248,14 +247,14 @@ export const AppointmentsManager = () => {
               <Label htmlFor="service" className="text-right">
                 Serviço
               </Label>
-              <Select value={formData.cdServico} onValueChange={(value) => setFormData(prev => ({ ...prev, cdServico: value }))}>
+              <Select value={formData.cdservico} onValueChange={(value) => setFormData(prev => ({ ...prev, cdservico: value }))}>
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Selecione um serviço" />
                 </SelectTrigger>
                 <SelectContent>
                   {services.map((service) => (
-                    <SelectItem key={service.cdServico} value={service.cdServico.toString()}>
-                      {service.dsServico}
+                    <SelectItem key={service.cdservico} value={service.cdservico.toString()}>
+                      {service.dsservico}
                     </SelectItem>
                   ))}
                 </SelectContent>

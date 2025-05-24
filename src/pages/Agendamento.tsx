@@ -17,9 +17,9 @@ import Footer from '@/components/Footer';
 import PetSelection from '@/components/PetSelection';
 
 interface Servico {
-  cdServico: number;
-  dsServico: string;
-  vrServico: number;
+  cdservico: number;
+  dsservico: string;
+  vrservico: number;
 }
 
 const Agendamento = () => {
@@ -50,9 +50,9 @@ const Agendamento = () => {
   const fetchServicos = async () => {
     try {
       const { data, error } = await supabase
-        .from('Servico')
+        .from('servico')
         .select('*')
-        .order('dsServico');
+        .order('dsservico');
 
       if (error) throw error;
       setServicos(data || []);
@@ -274,19 +274,19 @@ const Agendamento = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {servicos.map((servico) => (
                     <Card 
-                      key={servico.cdServico}
+                      key={servico.cdservico}
                       className={`cursor-pointer transition-all duration-300 border-2 ${
-                        selectedServico === servico.cdServico.toString() 
+                        selectedServico === servico.cdservico.toString() 
                           ? 'border-green-500 bg-green-50 shadow-lg scale-105' 
                           : 'border-gray-200 hover:border-green-300 hover:shadow-md'
                       }`}
-                      onClick={() => setSelectedServico(servico.cdServico.toString())}
+                      onClick={() => setSelectedServico(servico.cdservico.toString())}
                     >
                       <CardContent className="p-4">
-                        <h3 className="font-semibold text-gray-800 mb-2">{servico.dsServico}</h3>
-                        {servico.vrServico && (
+                        <h3 className="font-semibold text-gray-800 mb-2">{servico.dsservico}</h3>
+                        {servico.vrservico && (
                           <p className="text-green-600 font-bold text-lg">
-                            R$ {servico.vrServico.toFixed(2)}
+                            R$ {servico.vrservico.toFixed(2)}
                           </p>
                         )}
                       </CardContent>
@@ -420,7 +420,7 @@ const Agendamento = () => {
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="font-medium text-gray-700">Serviço:</span>
-                      <span className="text-gray-800">{servicos.find(s => s.cdServico.toString() === selectedServico)?.dsServico}</span>
+                      <span className="text-gray-800">{servicos.find(s => s.cdservico.toString() === selectedServico)?.dsservico}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium text-gray-700">Pet:</span>

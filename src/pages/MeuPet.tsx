@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,7 +21,6 @@ interface Pet {
 interface Agendamento {
   cdAgendamento: number;
   dtStart: string;
-  dsServico: string;
   flComparecimento: boolean;
 }
 
@@ -57,7 +55,7 @@ const MeuPet = () => {
 
         // Buscar agendamentos
         const { data: agendamentosData } = await supabase
-          .from('consultaagendamentopet')
+          .from('Agendamento')
           .select('*')
           .eq('cdCliente', cdCliente)
           .order('dtStart', { ascending: false });
@@ -174,7 +172,7 @@ const MeuPet = () => {
                         <Scissors className="w-5 h-5 text-blue-600" />
                       </div>
                       <div>
-                        <h4 className="font-medium">{agendamento.dsServico}</h4>
+                        <h4 className="font-medium">Serviço Agendado</h4>
                         <p className="text-sm text-gray-600">
                           {formatDateTime(agendamento.dtStart)}
                         </p>
