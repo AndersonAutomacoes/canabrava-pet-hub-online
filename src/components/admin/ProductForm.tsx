@@ -199,7 +199,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
             <ImageUpload 
               images={formData.imagens}
-              onImagesChange={(images) => setFormData(prev => ({ ...prev, imagens }))}
+              onImagesChange={(images) => setFormData(prev => ({ ...prev, imagens: images }))}
             />
 
             <div className="flex items-center space-x-2">
