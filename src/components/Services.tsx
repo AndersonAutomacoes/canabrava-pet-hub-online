@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -78,7 +78,7 @@ const Services = () => {
     // Simulate scheduling
     toast({
       title: "Agendamento realizado!",
-      description: `${ownerName}, seu agendamento para ${petName} foi confirmado para ${appointmentDate} às ${appointmentTime}.`,
+      description: `${ownerName}, seu agendamento para ${petName} foi confirmado para ${new Date(appointmentDate).toLocaleDateString('pt-BR')} às ${appointmentTime}.`,
     });
 
     // Reset form and close dialog
@@ -156,29 +156,30 @@ const Services = () => {
 
         {/* Dialog for scheduling */}
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[500px] bg-purple-50 border border-purple-300">
             <DialogHeader>
-              <DialogTitle>Agendar Serviço</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-purple-800">Agendar Serviço</DialogTitle>
+              <DialogDescription className="text-purple-600">
                 Preencha os dados abaixo para agendar o serviço para seu pet.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="date">Data</Label>
+                  <Label htmlFor="date" className="text-purple-700">Data</Label>
                   <Input
                     id="date"
                     type="date"
                     value={appointmentDate}
                     onChange={(e) => setAppointmentDate(e.target.value)}
                     min={new Date().toISOString().split('T')[0]}
+                    className="bg-white border-purple-300 focus:border-purple-500 focus:ring-purple-500 text-purple-800"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="time">Horário</Label>
+                  <Label htmlFor="time" className="text-purple-700">Horário</Label>
                   <Select value={appointmentTime} onValueChange={setAppointmentTime}>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-white border-purple-300 focus:border-purple-500 focus:ring-purple-500 text-purple-800">
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
@@ -197,57 +198,65 @@ const Services = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="petName">Nome do Pet *</Label>
+                  <Label htmlFor="petName" className="text-purple-700">Nome do Pet *</Label>
                   <Input
                     id="petName"
                     value={petName}
                     onChange={(e) => setPetName(e.target.value)}
                     placeholder="Ex: Rex"
+                    className="bg-white border-purple-300 focus:border-purple-500 focus:ring-purple-500 text-purple-800"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="petType">Tipo/Raça</Label>
+                  <Label htmlFor="petType" className="text-purple-700">Tipo/Raça</Label>
                   <Input
                     id="petType"
                     value={petType}
                     onChange={(e) => setPetType(e.target.value)}
                     placeholder="Ex: Golden Retriever"
+                    className="bg-white border-purple-300 focus:border-purple-500 focus:ring-purple-500 text-purple-800"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="ownerName">Seu Nome *</Label>
+                  <Label htmlFor="ownerName" className="text-purple-700">Seu Nome *</Label>
                   <Input
                     id="ownerName"
                     value={ownerName}
                     onChange={(e) => setOwnerName(e.target.value)}
                     placeholder="Seu nome completo"
+                    className="bg-white border-purple-300 focus:border-purple-500 focus:ring-purple-500 text-purple-800"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="ownerPhone">Telefone *</Label>
+                  <Label htmlFor="ownerPhone" className="text-purple-700">Telefone *</Label>
                   <Input
                     id="ownerPhone"
                     value={ownerPhone}
                     onChange={(e) => setOwnerPhone(e.target.value)}
                     placeholder="(11) 99999-9999"
+                    className="bg-white border-purple-300 focus:border-purple-500 focus:ring-purple-500 text-purple-800"
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="observations">Observações</Label>
+                <Label htmlFor="observations" className="text-purple-700">Observações</Label>
                 <Textarea
                   id="observations"
                   value={observations}
                   onChange={(e) => setObservations(e.target.value)}
                   placeholder="Informações adicionais sobre seu pet..."
                   rows={3}
+                  className="bg-white border-purple-300 focus:border-purple-500 focus:ring-purple-500 text-purple-800"
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={handleSchedule} className="bg-green-600 hover:bg-green-700">
+              <Button 
+                onClick={handleSchedule} 
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+              >
                 Confirmar Agendamento
               </Button>
             </DialogFooter>

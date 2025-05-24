@@ -60,6 +60,15 @@ export const ServicesManager = () => {
 
   const handleCreateService = async () => {
     try {
+      if (!formData.dsServico.trim()) {
+        toast({
+          title: "Campo obrigatório",
+          description: "O nome do serviço é obrigatório.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Gerar um novo código único
       const { data: maxService } = await supabase
         .from('Servico')
@@ -73,7 +82,10 @@ export const ServicesManager = () => {
         .from('Servico')
         .insert([{
           cdServico: newCdServico,
-          ...formData
+          dsServico: formData.dsServico,
+          vrServico: formData.vrServico,
+          cdEmpresa: formData.cdEmpresa,
+          cdServicoPai: null
         }]);
 
       if (error) throw error;
@@ -100,9 +112,22 @@ export const ServicesManager = () => {
     if (!editingService) return;
 
     try {
+      if (!formData.dsServico.trim()) {
+        toast({
+          title: "Campo obrigatório",
+          description: "O nome do serviço é obrigatório.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from('Servico')
-        .update(formData)
+        .update({
+          dsServico: formData.dsServico,
+          vrServico: formData.vrServico,
+          cdEmpresa: formData.cdEmpresa
+        })
         .eq('cdServico', editingService.cdServico);
 
       if (error) throw error;
@@ -176,22 +201,22 @@ export const ServicesManager = () => {
   return (
     <div className="space-y-6 bg-white">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-slate-800">Gerenciar Serviços</h2>
-        <Button onClick={openCreateForm} className="bg-green-600 hover:bg-green-700 text-white">
+        <h2 className="text-2xl font-bold text-blue-800">Gerenciar Serviços</h2>
+        <Button onClick={openCreateForm} className="bg-blue-600 hover:bg-blue-700 text-white">
           <Plus className="w-4 h-4 mr-2" />
           Novo Serviço
         </Button>
       </div>
 
-      <Card className="bg-white border-slate-200 shadow-lg">
-        <CardHeader className="bg-white border-b border-slate-200">
+      <Card className="bg-white border-blue-200 shadow-lg">
+        <CardHeader className="bg-white border-b border-blue-200">
           <div className="flex items-center space-x-2">
-            <Search className="w-4 h-4 text-slate-500" />
+            <Search className="w-4 h-4 text-blue-500" />
             <Input
               placeholder="Buscar serviços..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm bg-white border-slate-300 focus:border-green-500 focus:ring-green-500"
+              className="max-w-sm bg-white border-blue-300 focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
         </CardHeader>
@@ -203,23 +228,23 @@ export const ServicesManager = () => {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-100 border-b border-slate-200 hover:bg-slate-100">
-                  <TableHead className="text-slate-700 font-semibold">Código</TableHead>
-                  <TableHead className="text-slate-700 font-semibold">Serviço</TableHead>
-                  <TableHead className="text-slate-700 font-semibold">Valor</TableHead>
-                  <TableHead className="text-slate-700 font-semibold">Empresa</TableHead>
-                  <TableHead className="text-slate-700 font-semibold">Ações</TableHead>
+                <TableRow className="bg-blue-100 border-b border-blue-200 hover:bg-blue-100">
+                  <TableHead className="text-blue-700 font-semibold">Código</TableHead>
+                  <TableHead className="text-blue-700 font-semibold">Serviço</TableHead>
+                  <TableHead className="text-blue-700 font-semibold">Valor</TableHead>
+                  <TableHead className="text-blue-700 font-semibold">Empresa</TableHead>
+                  <TableHead className="text-blue-700 font-semibold">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredServices.map((service) => (
-                  <TableRow key={service.cdServico} className="border-b border-slate-100 hover:bg-slate-50">
-                    <TableCell className="text-slate-700">{service.cdServico}</TableCell>
-                    <TableCell className="font-medium text-slate-800">{service.dsServico}</TableCell>
-                    <TableCell className="text-slate-700 font-medium">
+                  <TableRow key={service.cdServico} className="border-b border-blue-100 hover:bg-blue-50">
+                    <TableCell className="text-blue-700">{service.cdServico}</TableCell>
+                    <TableCell className="font-medium text-blue-800">{service.dsServico}</TableCell>
+                    <TableCell className="text-blue-700 font-medium">
                       {service.vrServico ? `R$ ${service.vrServico.toFixed(2)}` : 'N/A'}
                     </TableCell>
-                    <TableCell className="text-slate-700">{service.cdEmpresa}</TableCell>
+                    <TableCell className="text-blue-700">{service.cdEmpresa}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button 
@@ -250,30 +275,30 @@ export const ServicesManager = () => {
 
       {/* Dialog para criar/editar serviço */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="sm:max-w-[425px] bg-white">
+        <DialogContent className="sm:max-w-[425px] bg-blue-50 border border-blue-300">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-blue-800">
               {editingService ? 'Editar Serviço' : 'Novo Serviço'}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-blue-600">
               {editingService ? 'Edite as informações do serviço' : 'Preencha as informações do novo serviço'}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
+              <Label htmlFor="name" className="text-right text-blue-700">
                 Nome
               </Label>
               <Input
                 id="name"
                 value={formData.dsServico}
                 onChange={(e) => setFormData(prev => ({ ...prev, dsServico: e.target.value }))}
-                className="col-span-3 bg-white"
+                className="col-span-3 bg-white border-blue-300 focus:border-blue-500 focus:ring-blue-500 text-blue-800"
                 placeholder="Nome do serviço"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="price" className="text-right">
+              <Label htmlFor="price" className="text-right text-blue-700">
                 Valor
               </Label>
               <Input
@@ -283,13 +308,16 @@ export const ServicesManager = () => {
                 min="0"
                 value={formData.vrServico}
                 onChange={(e) => setFormData(prev => ({ ...prev, vrServico: parseFloat(e.target.value) || 0 }))}
-                className="col-span-3 bg-white"
+                className="col-span-3 bg-white border-blue-300 focus:border-blue-500 focus:ring-blue-500 text-blue-800"
                 placeholder="0.00"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={editingService ? handleUpdateService : handleCreateService}>
+            <Button 
+              onClick={editingService ? handleUpdateService : handleCreateService}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
               {editingService ? 'Salvar Alterações' : 'Criar Serviço'}
             </Button>
           </DialogFooter>

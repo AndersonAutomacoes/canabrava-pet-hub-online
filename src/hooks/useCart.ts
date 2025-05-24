@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,7 +12,6 @@ interface CartItem {
     nome: string;
     preco: number;
     imagens: string[];
-    peso: number;
   };
 }
 
@@ -22,11 +22,8 @@ export const useCart = () => {
   const { toast } = useToast();
 
   const fetchCartItems = async () => {
-    if (!user) {
-      setCartItems([]);
-      return;
-    }
-
+    if (!user) return;
+    
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -38,34 +35,23 @@ export const useCart = () => {
           produtos:produto_id (
             nome,
             preco,
-            imagens,
-            peso
+            imagens
           )
         `)
         .eq('user_id', user.id);
 
       if (error) throw error;
 
-      const formattedItems = data?.map(item => ({
+      const formattedItems = (data || []).map(item => ({
         id: item.id,
         produto_id: item.produto_id,
         quantidade: item.quantidade,
-        produto: {
-          nome: item.produtos?.nome || '',
-          preco: item.produtos?.preco || 0,
-          imagens: item.produtos?.imagens || [],
-          peso: item.produtos?.peso || 0.5,
-        }
-      })) || [];
+        produto: item.produtos
+      }));
 
       setCartItems(formattedItems);
     } catch (error) {
       console.error('Erro ao buscar carrinho:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar o carrinho.",
-        variant: "destructive",
-      });
     } finally {
       setLoading(false);
     }
@@ -82,23 +68,42 @@ export const useCart = () => {
     }
 
     try {
-      const { error } = await supabase
+      // Verificar se o item já existe no carrinho
+      const { data: existingItem } = await supabase
         .from('carrinho')
-        .upsert({
-          user_id: user.id,
-          produto_id: produtoId,
-          quantidade,
-        }, {
-          onConflict: 'user_id,produto_id'
-        });
+        .select('id, quantidade')
+        .eq('user_id', user.id)
+        .eq('produto_id', produtoId)
+        .single();
 
-      if (error) throw error;
+      if (existingItem) {
+        // Atualizar quantidade se já existe
+        const { error } = await supabase
+          .from('carrinho')
+          .update({ quantidade: existingItem.quantidade + quantidade })
+          .eq('id', existingItem.id);
 
-      await fetchCartItems();
+        if (error) throw error;
+      } else {
+        // Adicionar novo item
+        const { error } = await supabase
+          .from('carrinho')
+          .insert({
+            user_id: user.id,
+            produto_id: produtoId,
+            quantidade
+          });
+
+        if (error) throw error;
+      }
+
       toast({
         title: "Produto adicionado!",
         description: "O produto foi adicionado ao carrinho.",
       });
+
+      // Recarregar carrinho
+      fetchCartItems();
     } catch (error) {
       console.error('Erro ao adicionar ao carrinho:', error);
       toast({
@@ -109,20 +114,21 @@ export const useCart = () => {
     }
   };
 
-  const removeFromCart = async (cartItemId: string) => {
+  const removeFromCart = async (itemId: string) => {
     try {
       const { error } = await supabase
         .from('carrinho')
         .delete()
-        .eq('id', cartItemId);
+        .eq('id', itemId);
 
       if (error) throw error;
 
-      await fetchCartItems();
       toast({
         title: "Produto removido",
         description: "O produto foi removido do carrinho.",
       });
+
+      fetchCartItems();
     } catch (error) {
       console.error('Erro ao remover do carrinho:', error);
       toast({
@@ -133,21 +139,21 @@ export const useCart = () => {
     }
   };
 
-  const updateQuantity = async (cartItemId: string, novaQuantidade: number) => {
-    if (novaQuantidade <= 0) {
-      await removeFromCart(cartItemId);
+  const updateQuantity = async (itemId: string, quantidade: number) => {
+    if (quantidade <= 0) {
+      removeFromCart(itemId);
       return;
     }
 
     try {
       const { error } = await supabase
         .from('carrinho')
-        .update({ quantidade: novaQuantidade })
-        .eq('id', cartItemId);
+        .update({ quantidade })
+        .eq('id', itemId);
 
       if (error) throw error;
 
-      await fetchCartItems();
+      fetchCartItems();
     } catch (error) {
       console.error('Erro ao atualizar quantidade:', error);
       toast({
@@ -170,8 +176,18 @@ export const useCart = () => {
       if (error) throw error;
 
       setCartItems([]);
+      
+      toast({
+        title: "Carrinho limpo",
+        description: "Todos os itens foram removidos do carrinho.",
+      });
     } catch (error) {
       console.error('Erro ao limpar carrinho:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível limpar o carrinho.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -181,12 +197,16 @@ export const useCart = () => {
     }, 0);
   };
 
-  const getCartItemCount = () => {
+  const getCartItemsCount = () => {
     return cartItems.reduce((total, item) => total + item.quantidade, 0);
   };
 
   useEffect(() => {
-    fetchCartItems();
+    if (user) {
+      fetchCartItems();
+    } else {
+      setCartItems([]);
+    }
   }, [user]);
 
   return {
@@ -197,7 +217,7 @@ export const useCart = () => {
     updateQuantity,
     clearCart,
     getCartTotal,
-    getCartItemCount,
-    fetchCartItems,
+    getCartItemsCount,
+    fetchCartItems
   };
 };
