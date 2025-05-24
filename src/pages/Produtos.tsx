@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ interface Produto {
   estoque: number;
   tipo_pet: string;
   imagens: string[];
+  ativo: boolean;
 }
 
 const Produtos = () => {
@@ -46,13 +48,18 @@ const Produtos = () => {
 
   const fetchProdutos = async () => {
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('produtos')
         .select('*')
         .eq('ativo', true)
         .order('nome');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar produtos:', error);
+        throw error;
+      }
+      
       setProdutos(data || []);
     } catch (error) {
       console.error('Erro ao buscar produtos:', error);
@@ -107,10 +114,14 @@ const Produtos = () => {
       });
     } catch (error) {
       console.error('Erro ao adicionar aos favoritos:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível adicionar aos favoritos.",
+        variant: "destructive",
+      });
     }
   };
 
-  // Se um produto está selecionado, mostrar detalhes
   if (selectedProduct) {
     return (
       <PageLayout
@@ -144,13 +155,13 @@ const Produtos = () => {
     const matchesSearch = produto.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          produto.descricao?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = !selectedCategory || produto.categoria === selectedCategory;
-    const matchesTipoPet = !selectedTipoPet || produto.tipo_pet === selectedTipoPet || produto.tipo_pet === 'ambos';
+    const matchesTipoPet = !selectedTipoPet || produto.tipo_pet === selectedTipoPet || produto.tipo_pet === 'todos';
     
     return matchesSearch && matchesCategory && matchesTipoPet;
   });
 
   const categories = [...new Set(produtos.map(p => p.categoria))];
-  const tiposPet = ['cao', 'gato', 'ambos'];
+  const tiposPet = ['cao', 'gato', 'todos'];
 
   return (
     <PageLayout
@@ -169,11 +180,11 @@ const Produtos = () => {
         />
         
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger>
+          <SelectTrigger className="bg-white border-gray-300">
             <SelectValue placeholder="Categoria" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todas as categorias</SelectItem>
+            <SelectItem value="all">Todas as categorias</SelectItem>
             {categories.map(category => (
               <SelectItem key={category} value={category}>
                 {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -183,14 +194,14 @@ const Produtos = () => {
         </Select>
         
         <Select value={selectedTipoPet} onValueChange={setSelectedTipoPet}>
-          <SelectTrigger>
+          <SelectTrigger className="bg-white border-gray-300">
             <SelectValue placeholder="Tipo de Pet" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos os pets</SelectItem>
+            <SelectItem value="all">Todos os pets</SelectItem>
             <SelectItem value="cao">Cães</SelectItem>
             <SelectItem value="gato">Gatos</SelectItem>
-            <SelectItem value="ambos">Ambos</SelectItem>
+            <SelectItem value="todos">Ambos</SelectItem>
           </SelectContent>
         </Select>
         
@@ -203,10 +214,14 @@ const Produtos = () => {
       {filteredProdutos.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredProdutos.map((produto) => (
-            <Card key={produto.id} className="hover:shadow-lg transition-shadow">
+            <Card key={produto.id} className="hover:shadow-lg transition-shadow bg-white">
               <CardHeader className="cursor-pointer" onClick={() => setSelectedProduct(produto)}>
                 <div className="aspect-square bg-gray-100 rounded-lg mb-2 flex items-center justify-center">
-                  <span className="text-4xl">🐾</span>
+                  {produto.imagens && produto.imagens.length > 0 ? (
+                    <img src={produto.imagens[0]} alt={produto.nome} className="w-full h-full object-cover rounded-lg" />
+                  ) : (
+                    <span className="text-4xl">🐾</span>
+                  )}
                 </div>
                 <CardTitle className="text-lg">{produto.nome}</CardTitle>
                 <div className="flex gap-2">
@@ -236,7 +251,10 @@ const Produtos = () => {
               
               <CardFooter className="flex gap-2">
                 <Button
-                  onClick={() => handleAddToCart(produto.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddToCart(produto.id);
+                  }}
                   className="flex-1 bg-green-600 hover:bg-green-700"
                   disabled={produto.estoque === 0}
                 >
@@ -246,7 +264,10 @@ const Produtos = () => {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => addToFavorites(produto.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    addToFavorites(produto.id);
+                  }}
                 >
                   <Heart className="w-4 h-4" />
                 </Button>

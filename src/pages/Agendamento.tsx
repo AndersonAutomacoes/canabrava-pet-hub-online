@@ -153,6 +153,13 @@ const Agendamento = () => {
     }
   };
 
+  const formatDisplayDate = (date: Date, time: string) => {
+    const [hours, minutes] = time.split(':');
+    const dateTime = new Date(date);
+    dateTime.setHours(parseInt(hours), parseInt(minutes));
+    return format(dateTime, "dd-MM-yyyy HH:mm", { locale: ptBR });
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-green-50">
@@ -373,8 +380,7 @@ const Agendamento = () => {
                   <div className="space-y-2">
                     <p><strong>Serviço:</strong> {servicos.find(s => s.cdServico.toString() === selectedServico)?.dsServico}</p>
                     <p><strong>Pet:</strong> Pet #{selectedPet}</p>
-                    <p><strong>Data:</strong> {selectedDate && format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
-                    <p><strong>Horário:</strong> {selectedTime}</p>
+                    <p><strong>Data e Hora:</strong> {selectedDate && selectedTime && formatDisplayDate(selectedDate, selectedTime)}</p>
                     {observacoes && <p><strong>Observações:</strong> {observacoes}</p>}
                   </div>
                 </div>

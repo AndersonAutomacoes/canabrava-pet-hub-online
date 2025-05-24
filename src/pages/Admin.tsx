@@ -15,10 +15,28 @@ import { AppointmentsManager } from '@/components/admin/AppointmentsManager';
 const Admin = () => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   const handleLogout = async () => {
     await signOut();
     navigate('/');
+  };
+
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case 'add-product':
+        setActiveTab('products');
+        break;
+      case 'new-appointment':
+        setActiveTab('appointments');
+        break;
+      case 'view-orders':
+        // Implementar quando houver aba de pedidos
+        console.log('Ver pedidos - funcionalidade em desenvolvimento');
+        break;
+      default:
+        break;
+    }
   };
 
   return (
@@ -53,7 +71,7 @@ const Admin = () => {
         </div>
 
         <div className="container mx-auto px-4 py-8">
-          <Tabs defaultValue="dashboard" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-4 mb-8 bg-white/95 backdrop-blur-sm border border-slate-200 shadow-md rounded-xl p-1">
               <TabsTrigger 
                 value="dashboard" 
@@ -102,13 +120,22 @@ const Admin = () => {
                     <CardDescription className="text-slate-600">Funcionalidades mais utilizadas</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <Button className="w-full pet-button-gradient text-white hover:shadow-lg transition-all duration-200 rounded-xl">
+                    <Button 
+                      onClick={() => handleQuickAction('add-product')}
+                      className="w-full pet-button-gradient text-white hover:shadow-lg transition-all duration-200 rounded-xl"
+                    >
                       Adicionar Produto
                     </Button>
-                    <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white hover:shadow-lg transition-all duration-200 rounded-xl">
+                    <Button 
+                      onClick={() => handleQuickAction('new-appointment')}
+                      className="w-full bg-blue-500 hover:bg-blue-600 text-white hover:shadow-lg transition-all duration-200 rounded-xl"
+                    >
                       Novo Agendamento
                     </Button>
-                    <Button className="w-full bg-purple-500 hover:bg-purple-600 text-white hover:shadow-lg transition-all duration-200 rounded-xl">
+                    <Button 
+                      onClick={() => handleQuickAction('view-orders')}
+                      className="w-full bg-purple-500 hover:bg-purple-600 text-white hover:shadow-lg transition-all duration-200 rounded-xl"
+                    >
                       Ver Pedidos
                     </Button>
                   </CardContent>

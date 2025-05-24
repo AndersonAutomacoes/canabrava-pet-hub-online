@@ -29,7 +29,7 @@ export const QuickActions = () => {
       icon: Phone,
       label: 'Entrar em Contato',
       description: 'Tire suas dúvidas conosco',
-      onClick: () => window.open('tel:(11)99999-9999'),
+      onClick: () => window.open('https://wa.me/5511999999999?text=Olá! Gostaria de mais informações sobre os serviços do PetShop Canabrava.', '_blank'),
       colorClass: 'bg-orange-500 hover:bg-orange-600',
       bgClass: 'hover:bg-orange-50'
     },
@@ -37,7 +37,7 @@ export const QuickActions = () => {
       icon: MapPin,
       label: 'Como Chegar',
       description: 'Rua das Flores, 123 - Canabrava',
-      onClick: () => window.open('https://maps.google.com'),
+      onClick: () => window.open('https://maps.google.com/maps?q=Rua+das+Flores,+123+Canabrava', '_blank'),
       colorClass: 'bg-purple-500 hover:bg-purple-600',
       bgClass: 'hover:bg-purple-50'
     }
