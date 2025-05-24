@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,9 +12,14 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { getCartItemsCount } = useCart();
-  const { isAdmin } = useAdmin();
+  const { isAdmin, loading: adminLoading } = useAdmin();
   const navigate = useNavigate();
   const cartItemCount = getCartItemsCount();
+
+  // Debug logs
+  console.log('Header - User:', user?.email);
+  console.log('Header - Is Admin:', isAdmin);
+  console.log('Header - Admin Loading:', adminLoading);
 
   const handleAuthAction = () => {
     if (user) {
@@ -57,7 +63,7 @@ const Header = () => {
                 Meu Pet
               </Link>
             )}
-            {user && isAdmin && (
+            {user && !adminLoading && isAdmin && (
               <Link to="/admin" className="text-gray-700 hover:text-green-600 transition-colors flex items-center space-x-1">
                 <Settings className="w-4 h-4" />
                 <span>Admin</span>
@@ -154,7 +160,7 @@ const Header = () => {
                   Meu Pet
                 </Link>
               )}
-              {user && isAdmin && (
+              {user && !adminLoading && isAdmin && (
                 <Link
                   to="/admin"
                   className="text-gray-700 hover:text-green-600 transition-colors flex items-center space-x-1"
