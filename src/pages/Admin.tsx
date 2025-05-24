@@ -23,7 +23,7 @@ const Admin = () => {
 
   return (
     <AdminRoute>
-      <div className="min-h-screen pet-gradient-bg">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="border-b bg-white/98 backdrop-blur-sm shadow-lg border-slate-200/80">
           <div className="container mx-auto px-4 py-6">
             <div className="flex items-center justify-between">
@@ -37,7 +37,7 @@ const Admin = () => {
                   <span>Voltar à Loja</span>
                 </Button>
                 <div>
-                  <h1 className="text-3xl font-bold gradient-text">Painel Administrativo</h1>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">Painel Administrativo</h1>
                   <p className="text-slate-600 font-medium">PetShop Canabrava</p>
                 </div>
               </div>
@@ -57,28 +57,28 @@ const Admin = () => {
             <TabsList className="grid w-full grid-cols-4 mb-8 bg-white/95 backdrop-blur-sm border border-slate-200 shadow-md rounded-xl p-1">
               <TabsTrigger 
                 value="dashboard" 
-                className="flex items-center space-x-2 data-[state=active]:bg-green-500 data-[state=active]:text-white text-slate-700 hover:bg-green-50 transition-all duration-200 rounded-lg"
+                className="flex items-center space-x-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-slate-700 hover:bg-green-50 hover:text-green-700 transition-all duration-200 rounded-lg font-medium"
               >
                 <BarChart className="w-4 h-4" />
                 <span>Dashboard</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="products" 
-                className="flex items-center space-x-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white text-slate-700 hover:bg-blue-50 transition-all duration-200 rounded-lg"
+                className="flex items-center space-x-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 rounded-lg font-medium"
               >
                 <Package className="w-4 h-4" />
                 <span>Produtos</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="services" 
-                className="flex items-center space-x-2 data-[state=active]:bg-purple-500 data-[state=active]:text-white text-slate-700 hover:bg-purple-50 transition-all duration-200 rounded-lg"
+                className="flex items-center space-x-2 data-[state=active]:bg-purple-600 data-[state=active]:text-white text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-all duration-200 rounded-lg font-medium"
               >
                 <Settings className="w-4 h-4" />
                 <span>Serviços</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="appointments" 
-                className="flex items-center space-x-2 data-[state=active]:bg-orange-500 data-[state=active]:text-white text-slate-700 hover:bg-orange-50 transition-all duration-200 rounded-lg"
+                className="flex items-center space-x-2 data-[state=active]:bg-orange-600 data-[state=active]:text-white text-slate-700 hover:bg-orange-50 hover:text-orange-700 transition-all duration-200 rounded-lg font-medium"
               >
                 <Calendar className="w-4 h-4" />
                 <span>Agendamentos</span>
