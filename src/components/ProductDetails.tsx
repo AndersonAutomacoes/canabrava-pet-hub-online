@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, Heart, Star, ArrowLeft, Plus, Minus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/hooks/useCart';
+import ProductReviews from './ProductReviews';
 
 interface Product {
   id: string;
@@ -46,7 +47,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product, onBack }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-8">
       <Button
         variant="outline"
         onClick={onBack}
@@ -201,6 +202,12 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product, onBack }) => {
           </Card>
         </div>
       </div>
+
+      {/* Seção de Reviews */}
+      <ProductReviews 
+        productId={product.id} 
+        productName={product.nome}
+      />
     </div>
   );
 };
