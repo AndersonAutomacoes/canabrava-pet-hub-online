@@ -44,7 +44,7 @@
     --sidebar-border: 226 232 240;
     --sidebar-ring: 34 197 94;
 
-    /* New improved pet-friendly colors with better contrast */
+    /* Updated pet-friendly colors with better contrast and no yellow/white combinations */
     --pet-green: 34 197 94;
     --pet-green-light: 240 253 244;
     --pet-blue: 37 99 235;
@@ -219,7 +219,7 @@
     @apply pet-badge bg-purple-50 text-purple-700 border border-purple-200;
   }
 
-  /* Admin specific styles */
+  /* Admin specific styles - Updated with better contrast */
   .admin-card {
     @apply bg-white/95 backdrop-blur-sm border border-slate-200 shadow-lg rounded-xl;
   }

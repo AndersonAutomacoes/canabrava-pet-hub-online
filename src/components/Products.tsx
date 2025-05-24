@@ -137,8 +137,8 @@ const Products = () => {
               onClick={() => setSelectedCategory(category.id)}
               className={`flex items-center space-x-2 ${
                 selectedCategory === category.id 
-                  ? 'bg-green-600 hover:bg-green-700' 
-                  : 'hover:bg-green-50 hover:text-green-600'
+                  ? 'bg-green-600 hover:bg-green-700 text-white' 
+                  : 'hover:bg-green-50 hover:text-green-600 text-gray-700 border-gray-300'
               }`}
             >
               <span>{category.icon}</span>
@@ -154,17 +154,17 @@ const Products = () => {
               <CardHeader className="text-center pb-4 relative">
                 {product.badge && (
                   <Badge 
-                    className={`absolute top-4 right-4 ${
-                      product.badge === 'Mais Vendido' ? 'bg-orange-500' :
-                      product.badge === 'Novo' ? 'bg-blue-500' :
-                      'bg-green-500'
+                    className={`absolute top-4 right-4 text-white font-semibold ${
+                      product.badge === 'Mais Vendido' ? 'bg-blue-600 hover:bg-blue-700' :
+                      product.badge === 'Novo' ? 'bg-green-600 hover:bg-green-700' :
+                      'bg-purple-600 hover:bg-purple-700'
                     }`}
                   >
                     {product.badge}
                   </Badge>
                 )}
                 <div className="text-6xl mb-4">{product.image}</div>
-                <CardTitle className="text-lg mb-2">{product.name}</CardTitle>
+                <CardTitle className="text-lg mb-2 text-gray-800">{product.name}</CardTitle>
                 <CardDescription className="text-gray-600">
                   {product.description}
                 </CardDescription>
@@ -190,8 +190,8 @@ const Products = () => {
                   </div>
                   <div className="text-right">
                     <div className="flex items-center space-x-1">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm font-semibold">{product.rating}</span>
+                      <Star className="w-4 h-4 fill-orange-400 text-orange-400" />
+                      <span className="text-sm font-semibold text-gray-700">{product.rating}</span>
                     </div>
                     <div className="text-xs text-gray-500">
                       ({product.reviews} avaliações)
@@ -210,8 +210,8 @@ const Products = () => {
                   <Button 
                     className={`flex-1 ${
                       product.inStock 
-                        ? 'bg-green-600 hover:bg-green-700' 
-                        : 'bg-gray-400 cursor-not-allowed'
+                        ? 'bg-green-600 hover:bg-green-700 text-white' 
+                        : 'bg-gray-400 cursor-not-allowed text-white'
                     }`}
                     onClick={() => addToCart(product)}
                     disabled={!product.inStock}
@@ -219,7 +219,7 @@ const Products = () => {
                     <ShoppingCart className="w-4 h-4 mr-2" />
                     {product.inStock ? 'Adicionar' : 'Indisponível'}
                   </Button>
-                  <Button variant="outline" size="icon" className="hover:text-red-500">
+                  <Button variant="outline" size="icon" className="hover:text-red-500 border-gray-300">
                     <Heart className="w-4 h-4" />
                   </Button>
                 </div>
@@ -234,10 +234,10 @@ const Products = () => {
             <h3 className="text-lg font-semibold text-green-800 mb-2">
               Carrinho ({cart.length} {cart.length === 1 ? 'item' : 'itens'})
             </h3>
-            <p className="text-green-600 mb-4">
+            <p className="text-green-700 mb-4">
               Total: R$ {cart.reduce((total, item) => total + item.price, 0).toFixed(2)}
             </p>
-            <Button className="bg-green-600 hover:bg-green-700">
+            <Button className="bg-green-600 hover:bg-green-700 text-white">
               Finalizar Compra
             </Button>
           </div>
@@ -245,17 +245,17 @@ const Products = () => {
 
         {/* Features */}
         <div className="grid md:grid-cols-3 gap-6 mt-12">
-          <div className="text-center p-6 bg-white rounded-lg shadow-md">
+          <div className="text-center p-6 bg-white rounded-lg shadow-md border border-gray-200">
             <div className="text-3xl mb-3">🚚</div>
             <h3 className="font-semibold text-gray-800 mb-2">Entrega Rápida</h3>
             <p className="text-gray-600 text-sm">Entrega em 24h para a região de Canabrava</p>
           </div>
-          <div className="text-center p-6 bg-white rounded-lg shadow-md">
+          <div className="text-center p-6 bg-white rounded-lg shadow-md border border-gray-200">
             <div className="text-3xl mb-3">💳</div>
             <h3 className="font-semibold text-gray-800 mb-2">Pagamento Fácil</h3>
             <p className="text-gray-600 text-sm">Pix, cartão ou dinheiro na entrega</p>
           </div>
-          <div className="text-center p-6 bg-white rounded-lg shadow-md">
+          <div className="text-center p-6 bg-white rounded-lg shadow-md border border-gray-200">
             <div className="text-3xl mb-3">🔄</div>
             <h3 className="font-semibold text-gray-800 mb-2">Troca Garantida</h3>
             <p className="text-gray-600 text-sm">7 dias para trocar se não gostar</p>
