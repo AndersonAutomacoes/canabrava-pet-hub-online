@@ -1,4 +1,6 @@
 
+import React from 'react';
+
 export const measurePerformance = (name: string, fn: () => void) => {
   const start = performance.now();
   fn();
