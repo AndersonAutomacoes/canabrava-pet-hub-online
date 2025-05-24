@@ -49,6 +49,14 @@ const Header = () => {
             <Link to="/agendamento" className="text-gray-700 hover:text-green-600 transition-colors">
               Agendamento
             </Link>
+            <Link to="/blog" className="text-gray-700 hover:text-green-600 transition-colors">
+              Blog
+            </Link>
+            {user && (
+              <Link to="/meu-pet" className="text-gray-700 hover:text-green-600 transition-colors">
+                Meu Pet
+              </Link>
+            )}
             {user && isAdmin && (
               <Link to="/admin" className="text-gray-700 hover:text-green-600 transition-colors flex items-center space-x-1">
                 <Settings className="w-4 h-4" />
@@ -98,6 +106,7 @@ const Header = () => {
               size="sm"
               className="md:hidden"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
+              data-testid="mobile-menu-button"
             >
               {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
@@ -106,7 +115,7 @@ const Header = () => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <nav className="md:hidden mt-4 pb-4 border-t pt-4">
+          <nav className="md:hidden mt-4 pb-4 border-t pt-4" data-testid="mobile-nav">
             <div className="flex flex-col space-y-3">
               <Link
                 to="/"
@@ -129,6 +138,22 @@ const Header = () => {
               >
                 Agendamento
               </Link>
+              <Link
+                to="/blog"
+                className="text-gray-700 hover:text-green-600 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Blog
+              </Link>
+              {user && (
+                <Link
+                  to="/meu-pet"
+                  className="text-gray-700 hover:text-green-600 transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Meu Pet
+                </Link>
+              )}
               {user && isAdmin && (
                 <Link
                   to="/admin"

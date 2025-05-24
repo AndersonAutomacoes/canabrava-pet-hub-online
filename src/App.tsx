@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +16,8 @@ import Carrinho from "./pages/Carrinho";
 import Checkout from "./pages/Checkout";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import Blog from "./pages/Blog";
+import MeuPet from "./pages/MeuPet";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -47,6 +48,8 @@ const AppContent = () => {
                 <Route path="/carrinho" element={<Carrinho />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/meu-pet" element={<MeuPet />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <LGPDConsent />
