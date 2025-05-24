@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,10 +10,10 @@ import { useAdmin } from '@/hooks/useAdmin';
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
-  const { getCartItemCount } = useCart();
+  const { getCartItemsCount } = useCart();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
-  const cartItemCount = getCartItemCount();
+  const cartItemCount = getCartItemsCount();
 
   const handleAuthAction = () => {
     if (user) {

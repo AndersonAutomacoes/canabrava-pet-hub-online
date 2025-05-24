@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,7 @@ const CartSummary = () => {
     updateQuantity, 
     removeFromCart, 
     getCartTotal, 
-    getCartItemCount 
+    getCartItemsCount 
   } = useCart();
 
   if (loading) {
@@ -58,7 +57,7 @@ const CartSummary = () => {
             <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
               <ShoppingCart className="w-5 h-5 text-white" />
             </div>
-            <span>Carrinho ({getCartItemCount()} {getCartItemCount() === 1 ? 'item' : 'itens'})</span>
+            <span>Carrinho ({getCartItemsCount()} {getCartItemsCount() === 1 ? 'item' : 'itens'})</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">

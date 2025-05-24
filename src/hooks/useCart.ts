@@ -12,6 +12,7 @@ interface CartItem {
     nome: string;
     preco: number;
     imagens: string[];
+    peso?: number;
   };
 }
 
@@ -35,7 +36,8 @@ export const useCart = () => {
           produtos:produto_id (
             nome,
             preco,
-            imagens
+            imagens,
+            peso
           )
         `)
         .eq('user_id', user.id);
@@ -201,6 +203,10 @@ export const useCart = () => {
     return cartItems.reduce((total, item) => total + item.quantidade, 0);
   };
 
+  const getCartItemCount = () => {
+    return getCartItemsCount();
+  };
+
   useEffect(() => {
     if (user) {
       fetchCartItems();
@@ -218,6 +224,7 @@ export const useCart = () => {
     clearCart,
     getCartTotal,
     getCartItemsCount,
+    getCartItemCount,
     fetchCartItems
   };
 };

@@ -17,10 +17,10 @@ const CheckoutFlow = () => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState({
+    cep: '',
     endereco: '',
     cidade: 'Salvador',
     estado: 'BA',
-    cep: '',
     complemento: ''
   });
   const [paymentMethod, setPaymentMethod] = useState('');
