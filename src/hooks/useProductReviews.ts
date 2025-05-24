@@ -11,7 +11,7 @@ interface ProductReview {
   avaliacao: number;
   comentario?: string;
   created_at: string;
-  profiles: {
+  profiles?: {
     nome: string;
   };
 }
@@ -29,33 +29,43 @@ export const useProductReviews = (produtoId?: string) => {
     
     setLoading(true);
     try {
-      // Since avaliacoes_produtos table was just created, let's use a simple query first
-      const { data, error } = await supabase
-        .from('avaliacoes_produtos' as any)
-        .select(`
-          *,
-          profiles:user_id (nome)
-        `)
+      // First get reviews
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from('avaliacoes_produtos')
+        .select('*')
         .eq('produto_id', produtoId)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching reviews:', error);
-        // For now, set empty array if table doesn't exist or has issues
+      if (reviewsError) {
+        console.error('Error fetching reviews:', reviewsError);
         setReviews([]);
         setTotalReviews(0);
         setAverageRating(0);
         return;
       }
-      
-      const reviewsData = data || [];
-      setReviews(reviewsData);
-      setTotalReviews(reviewsData.length);
-      
-      if (reviewsData.length > 0) {
-        const avg = reviewsData.reduce((sum: number, review: any) => sum + review.avaliacao, 0) / reviewsData.length;
+
+      // Then get user profiles for the reviews
+      if (reviewsData && reviewsData.length > 0) {
+        const userIds = reviewsData.map(review => review.user_id);
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, nome')
+          .in('id', userIds);
+
+        // Combine reviews with profile data
+        const reviewsWithProfiles = reviewsData.map(review => ({
+          ...review,
+          profiles: profilesData?.find(profile => profile.id === review.user_id) || { nome: 'Usuário' }
+        }));
+
+        setReviews(reviewsWithProfiles);
+        setTotalReviews(reviewsWithProfiles.length);
+        
+        const avg = reviewsWithProfiles.reduce((sum: number, review: any) => sum + review.avaliacao, 0) / reviewsWithProfiles.length;
         setAverageRating(avg);
       } else {
+        setReviews([]);
+        setTotalReviews(0);
         setAverageRating(0);
       }
     } catch (error) {
@@ -81,7 +91,7 @@ export const useProductReviews = (produtoId?: string) => {
     try {
       // Check if user already reviewed this product
       const { data: existingReview } = await supabase
-        .from('avaliacoes_produtos' as any)
+        .from('avaliacoes_produtos')
         .select('id')
         .eq('produto_id', produtoId)
         .eq('user_id', user.id)
@@ -97,7 +107,7 @@ export const useProductReviews = (produtoId?: string) => {
       }
 
       const { error } = await supabase
-        .from('avaliacoes_produtos' as any)
+        .from('avaliacoes_produtos')
         .insert({
           produto_id: produtoId,
           user_id: user.id,

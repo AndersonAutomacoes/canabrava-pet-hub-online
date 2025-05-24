@@ -9,6 +9,22 @@ import { Search, Filter } from 'lucide-react';
 import { useBlog } from '@/hooks/useBlog';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
+// Local interface that matches our component needs
+interface BlogPost {
+  id: string;
+  titulo: string;
+  conteudo: string;
+  resumo?: string;
+  imagem_url?: string;
+  categoria?: string;
+  autor?: string;
+  slug: string;
+  tags?: string[];
+  publicado: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 const Blog = () => {
   const { posts, loading } = useBlog();
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,7 +32,7 @@ const Blog = () => {
 
   const categories = [...new Set(posts.map(post => post.categoria).filter(Boolean))];
 
-  const filteredPosts = posts.filter(post => {
+  const filteredPosts = posts.filter((post: BlogPost) => {
     const matchesSearch = post.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          post.resumo?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = !selectedCategory || post.categoria === selectedCategory;
