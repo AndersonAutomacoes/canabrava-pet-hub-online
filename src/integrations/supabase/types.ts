@@ -567,6 +567,41 @@ export type Database = {
         }
         Relationships: []
       }
+      servico: {
+        Row: {
+          cdempresa: number
+          cdservico: number
+          cdservicopai: number | null
+          dsservico: string
+          dtcreatedat: string
+          vrservico: number | null
+        }
+        Insert: {
+          cdempresa?: number
+          cdservico?: number
+          cdservicopai?: number | null
+          dsservico?: string
+          dtcreatedat?: string
+          vrservico?: number | null
+        }
+        Update: {
+          cdempresa?: number
+          cdservico?: number
+          cdservicopai?: number | null
+          dsservico?: string
+          dtcreatedat?: string
+          vrservico?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "servico_cdservicopai_fkey"
+            columns: ["cdservicopai"]
+            isOneToOne: false
+            referencedRelation: "servico"
+            referencedColumns: ["cdservico"]
+          },
+        ]
+      }
       Servico: {
         Row: {
           cdEmpresa: number

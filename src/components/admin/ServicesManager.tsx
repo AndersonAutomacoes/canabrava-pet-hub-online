@@ -14,7 +14,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 interface Service {
   cdServico: number;
   dsServico: string;
-  vrServico: number;
+  vrServico: number | null;
   cdEmpresa: number;
   cdServicoPai: number | null;
 }
@@ -35,12 +35,18 @@ export const ServicesManager = () => {
   const fetchServices = async () => {
     setLoading(true);
     try {
+      console.log('Buscando serviços...');
       const { data, error } = await supabase
         .from('Servico')
         .select('*')
         .order('dsServico');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar serviços:', error);
+        throw error;
+      }
+      
+      console.log('Serviços encontrados:', data);
       setServices(data || []);
     } catch (error) {
       console.error('Erro ao buscar serviços:', error);
@@ -69,26 +75,20 @@ export const ServicesManager = () => {
         return;
       }
 
-      // Gerar um novo código único
-      const { data: maxService } = await supabase
-        .from('Servico')
-        .select('cdServico')
-        .order('cdServico', { ascending: false })
-        .limit(1);
-
-      const newCdServico = maxService && maxService.length > 0 ? maxService[0].cdServico + 1 : 1;
-
+      console.log('Criando serviço:', formData);
       const { error } = await supabase
         .from('Servico')
         .insert([{
-          cdServico: newCdServico,
           dsServico: formData.dsServico,
-          vrServico: formData.vrServico,
+          vrServico: formData.vrServico || null,
           cdEmpresa: formData.cdEmpresa,
           cdServicoPai: null
         }]);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao criar serviço:', error);
+        throw error;
+      }
 
       toast({
         title: "Serviço criado!",
@@ -121,16 +121,20 @@ export const ServicesManager = () => {
         return;
       }
 
+      console.log('Atualizando serviço:', editingService.cdServico, formData);
       const { error } = await supabase
         .from('Servico')
         .update({
           dsServico: formData.dsServico,
-          vrServico: formData.vrServico,
+          vrServico: formData.vrServico || null,
           cdEmpresa: formData.cdEmpresa
         })
         .eq('cdServico', editingService.cdServico);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao atualizar serviço:', error);
+        throw error;
+      }
 
       toast({
         title: "Serviço atualizado!",
@@ -155,12 +159,16 @@ export const ServicesManager = () => {
     if (!confirm('Tem certeza que deseja excluir este serviço?')) return;
 
     try {
+      console.log('Excluindo serviço:', cdServico);
       const { error } = await supabase
         .from('Servico')
         .delete()
         .eq('cdServico', cdServico);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao excluir serviço:', error);
+        throw error;
+      }
 
       toast({
         title: "Serviço excluído!",
@@ -182,7 +190,7 @@ export const ServicesManager = () => {
     setEditingService(service);
     setFormData({
       dsServico: service.dsServico,
-      vrServico: service.vrServico,
+      vrServico: service.vrServico || 0,
       cdEmpresa: service.cdEmpresa
     });
     setShowForm(true);
@@ -267,6 +275,13 @@ export const ServicesManager = () => {
                     </TableCell>
                   </TableRow>
                 ))}
+                {filteredServices.length === 0 && !loading && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                      Nenhum serviço encontrado
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           )}
