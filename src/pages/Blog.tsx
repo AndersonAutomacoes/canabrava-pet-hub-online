@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { PageLayout } from '@/components/layout/PageLayout';
 import BlogCard from '@/components/blog/BlogCard';
@@ -13,7 +14,7 @@ interface BlogPost {
   id: string;
   titulo: string;
   conteudo: string;
-  resumo: string; // Made required to match BlogCard expectations
+  resumo: string; // Required for BlogCard
   imagem_url?: string;
   categoria?: string;
   autor?: string;
@@ -25,15 +26,23 @@ interface BlogPost {
 }
 
 const Blog = () => {
-  const { posts, loading } = useBlog();
+  const { posts: rawPosts, loading } = useBlog();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+
+  // Filter posts to only include those with resumo and transform them
+  const posts: BlogPost[] = rawPosts
+    .filter(post => post.resumo && post.resumo.trim() !== '')
+    .map(post => ({
+      ...post,
+      resumo: post.resumo!
+    }));
 
   const categories = [...new Set(posts.map(post => post.categoria).filter(Boolean))];
 
   const filteredPosts = posts.filter((post: BlogPost) => {
     const matchesSearch = post.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         post.resumo?.toLowerCase().includes(searchTerm.toLowerCase());
+                         post.resumo.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = !selectedCategory || post.categoria === selectedCategory;
     
     return matchesSearch && matchesCategory;
