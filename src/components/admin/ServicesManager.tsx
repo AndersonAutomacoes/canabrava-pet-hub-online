@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,14 +34,18 @@ export const ServicesManager = () => {
   const fetchServices = async () => {
     setLoading(true);
     try {
-      console.log('Buscando serviços...');
+      console.log('Iniciando busca de serviços...');
+      
+      // Tentativa mais simples de buscar dados
       const { data, error } = await supabase
         .from('servico')
         .select('*')
         .order('dsservico');
 
+      console.log('Resultado da query:', { data, error });
+
       if (error) {
-        console.error('Erro ao buscar serviços:', error);
+        console.error('Erro detalhado:', error);
         toast({
           title: "Erro",
           description: `Erro ao carregar serviços: ${error.message}`,
@@ -51,10 +54,16 @@ export const ServicesManager = () => {
         return;
       }
       
-      console.log('Serviços encontrados:', data);
+      console.log('Serviços carregados com sucesso:', data);
       setServices(data || []);
+      
+      toast({
+        title: "Sucesso",
+        description: `${(data || []).length} serviços carregados.`,
+      });
+      
     } catch (error) {
-      console.error('Erro inesperado ao buscar serviços:', error);
+      console.error('Erro inesperado:', error);
       toast({
         title: "Erro",
         description: "Erro inesperado ao carregar os serviços.",
@@ -81,14 +90,22 @@ export const ServicesManager = () => {
       }
 
       console.log('Criando serviço:', formData);
-      const { error } = await supabase
+      
+      const serviceData = {
+        dsservico: formData.dsservico.trim(),
+        vrservico: formData.vrservico > 0 ? formData.vrservico : null,
+        cdempresa: formData.cdempresa,
+        cdservicopai: null
+      };
+
+      console.log('Dados para inserção:', serviceData);
+
+      const { data, error } = await supabase
         .from('servico')
-        .insert([{
-          dsservico: formData.dsservico.trim(),
-          vrservico: formData.vrservico > 0 ? formData.vrservico : null,
-          cdempresa: formData.cdempresa,
-          cdservicopai: null
-        }]);
+        .insert([serviceData])
+        .select();
+
+      console.log('Resultado da inserção:', { data, error });
 
       if (error) {
         console.error('Erro ao criar serviço:', error);
@@ -107,7 +124,7 @@ export const ServicesManager = () => {
 
       setShowForm(false);
       setFormData({ dsservico: '', vrservico: 0, cdempresa: 1 });
-      fetchServices();
+      await fetchServices();
     } catch (error) {
       console.error('Erro inesperado ao criar serviço:', error);
       toast({
@@ -132,14 +149,20 @@ export const ServicesManager = () => {
       }
 
       console.log('Atualizando serviço:', editingService.cdservico, formData);
-      const { error } = await supabase
+      
+      const updateData = {
+        dsservico: formData.dsservico.trim(),
+        vrservico: formData.vrservico > 0 ? formData.vrservico : null,
+        cdempresa: formData.cdempresa
+      };
+
+      const { data, error } = await supabase
         .from('servico')
-        .update({
-          dsservico: formData.dsservico.trim(),
-          vrservico: formData.vrservico > 0 ? formData.vrservico : null,
-          cdempresa: formData.cdempresa
-        })
-        .eq('cdservico', editingService.cdservico);
+        .update(updateData)
+        .eq('cdservico', editingService.cdservico)
+        .select();
+
+      console.log('Resultado da atualização:', { data, error });
 
       if (error) {
         console.error('Erro ao atualizar serviço:', error);
@@ -159,7 +182,7 @@ export const ServicesManager = () => {
       setShowForm(false);
       setEditingService(null);
       setFormData({ dsservico: '', vrservico: 0, cdempresa: 1 });
-      fetchServices();
+      await fetchServices();
     } catch (error) {
       console.error('Erro inesperado ao atualizar serviço:', error);
       toast({
@@ -175,10 +198,13 @@ export const ServicesManager = () => {
 
     try {
       console.log('Excluindo serviço:', cdservico);
+      
       const { error } = await supabase
         .from('servico')
         .delete()
         .eq('cdservico', cdservico);
+
+      console.log('Resultado da exclusão:', { error });
 
       if (error) {
         console.error('Erro ao excluir serviço:', error);
@@ -195,7 +221,7 @@ export const ServicesManager = () => {
         description: "O serviço foi excluído com sucesso.",
       });
 
-      fetchServices();
+      await fetchServices();
     } catch (error) {
       console.error('Erro inesperado ao excluir serviço:', error);
       toast({
