@@ -79,15 +79,28 @@ export const ServicesManager = () => {
       const { error } = await supabase
         .from('Servico')
         .insert([{
-          dsServico: formData.dsServico,
-          vrServico: formData.vrServico || null,
+          dsServico: formData.dsServico.trim(),
+          vrServico: formData.vrServico > 0 ? formData.vrServico : null,
           cdEmpresa: formData.cdEmpresa,
           cdServicoPai: null
         }]);
 
       if (error) {
         console.error('Erro ao criar serviço:', error);
-        throw error;
+        if (error.code === '42501') {
+          toast({
+            title: "Erro de permissão",
+            description: "Você não tem permissão para criar serviços. Verifique se você é um administrador.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Erro",
+            description: `Erro ao criar serviço: ${error.message}`,
+            variant: "destructive",
+          });
+        }
+        return;
       }
 
       toast({
@@ -125,15 +138,28 @@ export const ServicesManager = () => {
       const { error } = await supabase
         .from('Servico')
         .update({
-          dsServico: formData.dsServico,
-          vrServico: formData.vrServico || null,
+          dsServico: formData.dsServico.trim(),
+          vrServico: formData.vrServico > 0 ? formData.vrServico : null,
           cdEmpresa: formData.cdEmpresa
         })
         .eq('cdServico', editingService.cdServico);
 
       if (error) {
         console.error('Erro ao atualizar serviço:', error);
-        throw error;
+        if (error.code === '42501') {
+          toast({
+            title: "Erro de permissão",
+            description: "Você não tem permissão para atualizar serviços.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Erro",
+            description: `Erro ao atualizar serviço: ${error.message}`,
+            variant: "destructive",
+          });
+        }
+        return;
       }
 
       toast({
@@ -167,7 +193,20 @@ export const ServicesManager = () => {
 
       if (error) {
         console.error('Erro ao excluir serviço:', error);
-        throw error;
+        if (error.code === '42501') {
+          toast({
+            title: "Erro de permissão",
+            description: "Você não tem permissão para excluir serviços.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Erro",
+            description: `Erro ao excluir serviço: ${error.message}`,
+            variant: "destructive",
+          });
+        }
+        return;
       }
 
       toast({
@@ -278,7 +317,7 @@ export const ServicesManager = () => {
                 {filteredServices.length === 0 && !loading && (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                      Nenhum serviço encontrado
+                      {searchTerm ? 'Nenhum serviço encontrado com esse termo' : 'Nenhum serviço cadastrado'}
                     </TableCell>
                   </TableRow>
                 )}
@@ -302,7 +341,7 @@ export const ServicesManager = () => {
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right text-blue-700">
-                Nome
+                Nome *
               </Label>
               <Input
                 id="name"
@@ -310,11 +349,12 @@ export const ServicesManager = () => {
                 onChange={(e) => setFormData(prev => ({ ...prev, dsServico: e.target.value }))}
                 className="col-span-3 bg-white border-blue-300 focus:border-blue-500 focus:ring-blue-500 text-blue-800"
                 placeholder="Nome do serviço"
+                required
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="price" className="text-right text-blue-700">
-                Valor
+                Valor (R$)
               </Label>
               <Input
                 id="price"
@@ -329,6 +369,13 @@ export const ServicesManager = () => {
             </div>
           </div>
           <DialogFooter>
+            <Button 
+              variant="outline"
+              onClick={() => setShowForm(false)}
+              className="mr-2"
+            >
+              Cancelar
+            </Button>
             <Button 
               onClick={editingService ? handleUpdateService : handleCreateService}
               className="bg-blue-600 hover:bg-blue-700 text-white"
