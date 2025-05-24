@@ -74,6 +74,83 @@ export type Database = {
           },
         ]
       }
+      blog_posts: {
+        Row: {
+          autor: string | null
+          categoria: string | null
+          conteudo: string
+          created_at: string
+          id: string
+          imagem_url: string | null
+          publicado: boolean | null
+          resumo: string | null
+          slug: string
+          tags: string[] | null
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          autor?: string | null
+          categoria?: string | null
+          conteudo: string
+          created_at?: string
+          id?: string
+          imagem_url?: string | null
+          publicado?: boolean | null
+          resumo?: string | null
+          slug: string
+          tags?: string[] | null
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          autor?: string | null
+          categoria?: string | null
+          conteudo?: string
+          created_at?: string
+          id?: string
+          imagem_url?: string | null
+          publicado?: boolean | null
+          resumo?: string | null
+          slug?: string
+          tags?: string[] | null
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      carrinho: {
+        Row: {
+          created_at: string
+          id: string
+          produto_id: string | null
+          quantidade: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          produto_id?: string | null
+          quantidade?: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          produto_id?: string | null
+          quantidade?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carrinho_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       Clientes: {
         Row: {
           cdCliente: number
@@ -142,6 +219,113 @@ export type Database = {
         }
         Relationships: []
       }
+      favoritos: {
+        Row: {
+          created_at: string
+          id: string
+          produto_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          produto_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          produto_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favoritos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedido_itens: {
+        Row: {
+          id: string
+          pedido_id: string | null
+          preco_unitario: number
+          produto_id: string | null
+          quantidade: number
+          subtotal: number
+        }
+        Insert: {
+          id?: string
+          pedido_id?: string | null
+          preco_unitario: number
+          produto_id?: string | null
+          quantidade: number
+          subtotal: number
+        }
+        Update: {
+          id?: string
+          pedido_id?: string | null
+          preco_unitario?: number
+          produto_id?: string | null
+          quantidade?: number
+          subtotal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedido_itens_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedido_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedidos: {
+        Row: {
+          created_at: string
+          endereco_entrega: string
+          id: string
+          metodo_pagamento: string | null
+          observacoes: string | null
+          status: string
+          stripe_payment_intent_id: string | null
+          total: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          endereco_entrega: string
+          id?: string
+          metodo_pagamento?: string | null
+          observacoes?: string | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+          total: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          endereco_entrega?: string
+          id?: string
+          metodo_pagamento?: string | null
+          observacoes?: string | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+          total?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       Pet: {
         Row: {
           cdCliente: number
@@ -185,6 +369,102 @@ export type Database = {
             referencedColumns: ["cdCliente"]
           },
         ]
+      }
+      produtos: {
+        Row: {
+          ativo: boolean | null
+          categoria: string
+          created_at: string
+          descricao: string | null
+          dimensoes: string | null
+          estoque: number
+          id: string
+          imagens: string[] | null
+          marca: string | null
+          nome: string
+          peso: number | null
+          preco: number
+          tipo_pet: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          categoria: string
+          created_at?: string
+          descricao?: string | null
+          dimensoes?: string | null
+          estoque?: number
+          id?: string
+          imagens?: string[] | null
+          marca?: string | null
+          nome: string
+          peso?: number | null
+          preco: number
+          tipo_pet?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean | null
+          categoria?: string
+          created_at?: string
+          descricao?: string | null
+          dimensoes?: string | null
+          estoque?: number
+          id?: string
+          imagens?: string[] | null
+          marca?: string | null
+          nome?: string
+          peso?: number | null
+          preco?: number
+          tipo_pet?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          cep: string | null
+          cidade: string | null
+          created_at: string
+          data_nascimento: string | null
+          email: string
+          endereco: string | null
+          estado: string | null
+          id: string
+          nome: string
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          cep?: string | null
+          cidade?: string | null
+          created_at?: string
+          data_nascimento?: string | null
+          email: string
+          endereco?: string | null
+          estado?: string | null
+          id: string
+          nome: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          cep?: string | null
+          cidade?: string | null
+          created_at?: string
+          data_nascimento?: string | null
+          email?: string
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          nome?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       Servico: {
         Row: {
