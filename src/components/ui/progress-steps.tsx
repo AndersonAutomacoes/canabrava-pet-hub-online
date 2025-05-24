@@ -32,7 +32,7 @@ export const ProgressSteps = ({ steps, currentStep, className }: ProgressStepsPr
                   'w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all',
                   {
                     'bg-green-600 border-green-600 text-white': isCompleted,
-                    'bg-green-600 border-green-600 text-white': isCurrent,
+                    'bg-blue-600 border-blue-600 text-white': isCurrent,
                     'bg-white border-gray-300 text-gray-400': isUpcoming,
                   }
                 )}
@@ -48,7 +48,8 @@ export const ProgressSteps = ({ steps, currentStep, className }: ProgressStepsPr
                   className={cn(
                     'text-sm font-medium',
                     {
-                      'text-green-600': isCompleted || isCurrent,
+                      'text-green-600': isCompleted,
+                      'text-blue-600': isCurrent,
                       'text-gray-400': isUpcoming,
                     }
                   )}
