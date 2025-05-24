@@ -29,8 +29,9 @@ export const useProductReviews = (produtoId?: string) => {
     
     setLoading(true);
     try {
+      // Since avaliacoes_produtos table was just created, let's use a simple query first
       const { data, error } = await supabase
-        .from('avaliacoes_produtos')
+        .from('avaliacoes_produtos' as any)
         .select(`
           *,
           profiles:user_id (nome)
@@ -38,19 +39,30 @@ export const useProductReviews = (produtoId?: string) => {
         .eq('produto_id', produtoId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching reviews:', error);
+        // For now, set empty array if table doesn't exist or has issues
+        setReviews([]);
+        setTotalReviews(0);
+        setAverageRating(0);
+        return;
+      }
       
-      setReviews(data || []);
-      setTotalReviews(data?.length || 0);
+      const reviewsData = data || [];
+      setReviews(reviewsData);
+      setTotalReviews(reviewsData.length);
       
-      if (data && data.length > 0) {
-        const avg = data.reduce((sum, review) => sum + review.avaliacao, 0) / data.length;
+      if (reviewsData.length > 0) {
+        const avg = reviewsData.reduce((sum: number, review: any) => sum + review.avaliacao, 0) / reviewsData.length;
         setAverageRating(avg);
       } else {
         setAverageRating(0);
       }
     } catch (error) {
-      console.error('Erro ao buscar avaliações:', error);
+      console.error('Error fetching reviews:', error);
+      setReviews([]);
+      setTotalReviews(0);
+      setAverageRating(0);
     } finally {
       setLoading(false);
     }
@@ -67,9 +79,9 @@ export const useProductReviews = (produtoId?: string) => {
     }
 
     try {
-      // Verificar se o usuário já avaliou este produto
+      // Check if user already reviewed this product
       const { data: existingReview } = await supabase
-        .from('avaliacoes_produtos')
+        .from('avaliacoes_produtos' as any)
         .select('id')
         .eq('produto_id', produtoId)
         .eq('user_id', user.id)
@@ -85,7 +97,7 @@ export const useProductReviews = (produtoId?: string) => {
       }
 
       const { error } = await supabase
-        .from('avaliacoes_produtos')
+        .from('avaliacoes_produtos' as any)
         .insert({
           produto_id: produtoId,
           user_id: user.id,
@@ -102,7 +114,7 @@ export const useProductReviews = (produtoId?: string) => {
 
       fetchReviews();
     } catch (error) {
-      console.error('Erro ao adicionar avaliação:', error);
+      console.error('Error adding review:', error);
       toast({
         title: "Erro",
         description: "Não foi possível enviar sua avaliação.",

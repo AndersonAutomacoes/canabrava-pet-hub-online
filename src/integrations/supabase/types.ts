@@ -95,6 +95,44 @@ export type Database = {
           },
         ]
       }
+      avaliacoes_produtos: {
+        Row: {
+          avaliacao: number
+          comentario: string | null
+          created_at: string
+          id: string
+          produto_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avaliacao: number
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          produto_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avaliacao?: number
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          produto_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avaliacoes_produtos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blog_posts: {
         Row: {
           autor: string | null
