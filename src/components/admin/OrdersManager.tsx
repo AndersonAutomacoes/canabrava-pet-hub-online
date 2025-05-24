@@ -36,8 +36,15 @@ export const OrdersManager = () => {
       const { data, error } = await supabase
         .from('pedidos')
         .select(`
-          *,
-          profiles (
+          id,
+          user_id,
+          created_at,
+          total,
+          endereco_entrega,
+          metodo_pagamento,
+          status,
+          observacoes,
+          profiles!left (
             nome,
             email
           )
@@ -45,7 +52,14 @@ export const OrdersManager = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setOrders(data || []);
+      
+      // Transform the data to match our Order interface
+      const transformedData = (data || []).map(item => ({
+        ...item,
+        profiles: item.profiles && !Array.isArray(item.profiles) ? item.profiles : null
+      }));
+      
+      setOrders(transformedData);
     } catch (error) {
       console.error('Erro ao buscar pedidos:', error);
       toast({
