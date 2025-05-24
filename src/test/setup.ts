@@ -33,10 +33,18 @@ vi.mock('@/integrations/supabase/client', () => ({
 vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),
   useLocation: () => ({ pathname: '/' }),
-  Link: ({ children, to }: any) => <a href={to}>{children}</a>,
-  BrowserRouter: ({ children }: any) => <div>{children}</div>,
-  Routes: ({ children }: any) => <div>{children}</div>,
-  Route: ({ children }: any) => <div>{children}</div>,
+  Link: ({ children, to }: { children: React.ReactNode; to: string }) => {
+    return React.createElement('a', { href: to }, children);
+  },
+  BrowserRouter: ({ children }: { children: React.ReactNode }) => {
+    return React.createElement('div', {}, children);
+  },
+  Routes: ({ children }: { children: React.ReactNode }) => {
+    return React.createElement('div', {}, children);
+  },
+  Route: ({ children }: { children: React.ReactNode }) => {
+    return React.createElement('div', {}, children);
+  },
 }));
 
 // Mock ResizeObserver
