@@ -5,12 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ShoppingCart, Search, Heart } from 'lucide-react';
+import { ShoppingCart, Search, Heart, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useCart } from '@/hooks/useCart';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import ProductDetails from '@/components/ProductDetails';
 
 interface Produto {
   id: string;
@@ -30,8 +32,10 @@ const Produtos = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedTipoPet, setSelectedTipoPet] = useState<string>('');
+  const [selectedProduct, setSelectedProduct] = useState<Produto | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { addToCart } = useCart();
 
   useEffect(() => {
     fetchProdutos();
@@ -59,7 +63,7 @@ const Produtos = () => {
     }
   };
 
-  const addToCart = async (produtoId: string) => {
+  const handleAddToCart = async (produtoId: string) => {
     if (!user) {
       toast({
         title: "Login necessário",
@@ -69,31 +73,7 @@ const Produtos = () => {
       return;
     }
 
-    try {
-      const { error } = await supabase
-        .from('carrinho')
-        .upsert({
-          user_id: user.id,
-          produto_id: produtoId,
-          quantidade: 1,
-        }, {
-          onConflict: 'user_id,produto_id'
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Produto adicionado!",
-        description: "O produto foi adicionado ao carrinho.",
-      });
-    } catch (error) {
-      console.error('Erro ao adicionar ao carrinho:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível adicionar o produto ao carrinho.",
-        variant: "destructive",
-      });
-    }
+    await addToCart(produtoId, 1);
   };
 
   const addToFavorites = async (produtoId: string) => {
@@ -126,6 +106,22 @@ const Produtos = () => {
       console.error('Erro ao adicionar aos favoritos:', error);
     }
   };
+
+  // Se um produto está selecionado, mostrar detalhes
+  if (selectedProduct) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-green-50">
+        <Header />
+        <main className="container mx-auto px-4 py-8">
+          <ProductDetails 
+            product={selectedProduct} 
+            onBack={() => setSelectedProduct(null)}
+          />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   const filteredProdutos = produtos.filter(produto => {
     const matchesSearch = produto.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -210,7 +206,7 @@ const Produtos = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredProdutos.map((produto) => (
             <Card key={produto.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
+              <CardHeader className="cursor-pointer" onClick={() => setSelectedProduct(produto)}>
                 <div className="aspect-square bg-gray-100 rounded-lg mb-2 flex items-center justify-center">
                   <span className="text-4xl">🐾</span>
                 </div>
@@ -225,7 +221,7 @@ const Produtos = () => {
                 </div>
               </CardHeader>
               
-              <CardContent>
+              <CardContent className="cursor-pointer" onClick={() => setSelectedProduct(produto)}>
                 <p className="text-sm text-gray-600 mb-2 line-clamp-2">{produto.descricao}</p>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-2xl font-bold text-green-600">
@@ -242,7 +238,7 @@ const Produtos = () => {
               
               <CardFooter className="flex gap-2">
                 <Button
-                  onClick={() => addToCart(produto.id)}
+                  onClick={() => handleAddToCart(produto.id)}
                   className="flex-1 bg-green-600 hover:bg-green-700"
                   disabled={produto.estoque === 0}
                 >
