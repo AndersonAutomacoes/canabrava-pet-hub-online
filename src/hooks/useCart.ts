@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,6 +11,7 @@ interface CartItem {
     nome: string;
     preco: number;
     imagens: string[];
+    peso: number;
   };
 }
 
@@ -38,7 +38,8 @@ export const useCart = () => {
           produtos:produto_id (
             nome,
             preco,
-            imagens
+            imagens,
+            peso
           )
         `)
         .eq('user_id', user.id);
@@ -53,6 +54,7 @@ export const useCart = () => {
           nome: item.produtos?.nome || '',
           preco: item.produtos?.preco || 0,
           imagens: item.produtos?.imagens || [],
+          peso: item.produtos?.peso || 0.5,
         }
       })) || [];
 
