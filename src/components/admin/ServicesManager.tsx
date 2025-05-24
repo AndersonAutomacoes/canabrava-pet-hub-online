@@ -12,11 +12,11 @@ import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface Service {
-  cdServico: number;
-  dsServico: string;
-  vrServico: number | null;
-  cdEmpresa: number;
-  cdServicoPai: number | null;
+  cdservico: number;
+  dsservico: string;
+  vrservico: number | null;
+  cdempresa: number;
+  cdservicopai: number | null;
 }
 
 export const ServicesManager = () => {
@@ -26,9 +26,9 @@ export const ServicesManager = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [formData, setFormData] = useState({
-    dsServico: '',
-    vrServico: 0,
-    cdEmpresa: 1
+    dsservico: '',
+    vrservico: 0,
+    cdempresa: 1
   });
   const { toast } = useToast();
 
@@ -37,9 +37,9 @@ export const ServicesManager = () => {
     try {
       console.log('Buscando serviços...');
       const { data, error } = await supabase
-        .from('Servico')
+        .from('servico')
         .select('*')
-        .order('dsServico');
+        .order('dsservico');
 
       if (error) {
         console.error('Erro ao buscar serviços:', error);
@@ -66,7 +66,7 @@ export const ServicesManager = () => {
 
   const handleCreateService = async () => {
     try {
-      if (!formData.dsServico.trim()) {
+      if (!formData.dsservico.trim()) {
         toast({
           title: "Campo obrigatório",
           description: "O nome do serviço é obrigatório.",
@@ -77,12 +77,12 @@ export const ServicesManager = () => {
 
       console.log('Criando serviço:', formData);
       const { error } = await supabase
-        .from('Servico')
+        .from('servico')
         .insert([{
-          dsServico: formData.dsServico.trim(),
-          vrServico: formData.vrServico > 0 ? formData.vrServico : null,
-          cdEmpresa: formData.cdEmpresa,
-          cdServicoPai: null
+          dsservico: formData.dsservico.trim(),
+          vrservico: formData.vrservico > 0 ? formData.vrservico : null,
+          cdempresa: formData.cdempresa,
+          cdservicopai: null
         }]);
 
       if (error) {
@@ -109,7 +109,7 @@ export const ServicesManager = () => {
       });
 
       setShowForm(false);
-      setFormData({ dsServico: '', vrServico: 0, cdEmpresa: 1 });
+      setFormData({ dsservico: '', vrservico: 0, cdempresa: 1 });
       fetchServices();
     } catch (error) {
       console.error('Erro ao criar serviço:', error);
@@ -125,7 +125,7 @@ export const ServicesManager = () => {
     if (!editingService) return;
 
     try {
-      if (!formData.dsServico.trim()) {
+      if (!formData.dsservico.trim()) {
         toast({
           title: "Campo obrigatório",
           description: "O nome do serviço é obrigatório.",
@@ -134,15 +134,15 @@ export const ServicesManager = () => {
         return;
       }
 
-      console.log('Atualizando serviço:', editingService.cdServico, formData);
+      console.log('Atualizando serviço:', editingService.cdservico, formData);
       const { error } = await supabase
-        .from('Servico')
+        .from('servico')
         .update({
-          dsServico: formData.dsServico.trim(),
-          vrServico: formData.vrServico > 0 ? formData.vrServico : null,
-          cdEmpresa: formData.cdEmpresa
+          dsservico: formData.dsservico.trim(),
+          vrservico: formData.vrservico > 0 ? formData.vrservico : null,
+          cdempresa: formData.cdempresa
         })
-        .eq('cdServico', editingService.cdServico);
+        .eq('cdservico', editingService.cdservico);
 
       if (error) {
         console.error('Erro ao atualizar serviço:', error);
@@ -169,7 +169,7 @@ export const ServicesManager = () => {
 
       setShowForm(false);
       setEditingService(null);
-      setFormData({ dsServico: '', vrServico: 0, cdEmpresa: 1 });
+      setFormData({ dsservico: '', vrservico: 0, cdempresa: 1 });
       fetchServices();
     } catch (error) {
       console.error('Erro ao atualizar serviço:', error);
@@ -181,15 +181,15 @@ export const ServicesManager = () => {
     }
   };
 
-  const handleDeleteService = async (cdServico: number) => {
+  const handleDeleteService = async (cdservico: number) => {
     if (!confirm('Tem certeza que deseja excluir este serviço?')) return;
 
     try {
-      console.log('Excluindo serviço:', cdServico);
+      console.log('Excluindo serviço:', cdservico);
       const { error } = await supabase
-        .from('Servico')
+        .from('servico')
         .delete()
-        .eq('cdServico', cdServico);
+        .eq('cdservico', cdservico);
 
       if (error) {
         console.error('Erro ao excluir serviço:', error);
@@ -228,21 +228,21 @@ export const ServicesManager = () => {
   const openEditForm = (service: Service) => {
     setEditingService(service);
     setFormData({
-      dsServico: service.dsServico,
-      vrServico: service.vrServico || 0,
-      cdEmpresa: service.cdEmpresa
+      dsservico: service.dsservico,
+      vrservico: service.vrservico || 0,
+      cdempresa: service.cdempresa
     });
     setShowForm(true);
   };
 
   const openCreateForm = () => {
     setEditingService(null);
-    setFormData({ dsServico: '', vrServico: 0, cdEmpresa: 1 });
+    setFormData({ dsservico: '', vrservico: 0, cdempresa: 1 });
     setShowForm(true);
   };
 
   const filteredServices = services.filter(service =>
-    service.dsServico.toLowerCase().includes(searchTerm.toLowerCase())
+    service.dsservico.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -285,13 +285,13 @@ export const ServicesManager = () => {
               </TableHeader>
               <TableBody>
                 {filteredServices.map((service) => (
-                  <TableRow key={service.cdServico} className="border-b border-blue-100 hover:bg-blue-50">
-                    <TableCell className="text-blue-700">{service.cdServico}</TableCell>
-                    <TableCell className="font-medium text-blue-800">{service.dsServico}</TableCell>
+                  <TableRow key={service.cdservico} className="border-b border-blue-100 hover:bg-blue-50">
+                    <TableCell className="text-blue-700">{service.cdservico}</TableCell>
+                    <TableCell className="font-medium text-blue-800">{service.dsservico}</TableCell>
                     <TableCell className="text-blue-700 font-medium">
-                      {service.vrServico ? `R$ ${service.vrServico.toFixed(2)}` : 'N/A'}
+                      {service.vrservico ? `R$ ${service.vrservico.toFixed(2)}` : 'N/A'}
                     </TableCell>
-                    <TableCell className="text-blue-700">{service.cdEmpresa}</TableCell>
+                    <TableCell className="text-blue-700">{service.cdempresa}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button 
@@ -305,7 +305,7 @@ export const ServicesManager = () => {
                         <Button 
                           variant="destructive" 
                           size="sm" 
-                          onClick={() => handleDeleteService(service.cdServico)}
+                          onClick={() => handleDeleteService(service.cdservico)}
                           className="bg-red-600 hover:bg-red-700"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -345,8 +345,8 @@ export const ServicesManager = () => {
               </Label>
               <Input
                 id="name"
-                value={formData.dsServico}
-                onChange={(e) => setFormData(prev => ({ ...prev, dsServico: e.target.value }))}
+                value={formData.dsservico}
+                onChange={(e) => setFormData(prev => ({ ...prev, dsservico: e.target.value }))}
                 className="col-span-3 bg-white border-blue-300 focus:border-blue-500 focus:ring-blue-500 text-blue-800"
                 placeholder="Nome do serviço"
                 required
@@ -361,8 +361,8 @@ export const ServicesManager = () => {
                 type="number"
                 step="0.01"
                 min="0"
-                value={formData.vrServico}
-                onChange={(e) => setFormData(prev => ({ ...prev, vrServico: parseFloat(e.target.value) || 0 }))}
+                value={formData.vrservico}
+                onChange={(e) => setFormData(prev => ({ ...prev, vrservico: parseFloat(e.target.value) || 0 }))}
                 className="col-span-3 bg-white border-blue-300 focus:border-blue-500 focus:ring-blue-500 text-blue-800"
                 placeholder="0.00"
               />

@@ -86,13 +86,6 @@ export type Database = {
             referencedRelation: "Pet"
             referencedColumns: ["cdPet"]
           },
-          {
-            foreignKeyName: "Agendamento_cdServico_fkey"
-            columns: ["cdServico"]
-            isOneToOne: false
-            referencedRelation: "Servico"
-            referencedColumns: ["cdServico"]
-          },
         ]
       }
       avaliacoes_produtos: {
@@ -602,70 +595,9 @@ export type Database = {
           },
         ]
       }
-      Servico: {
-        Row: {
-          cdEmpresa: number
-          cdServico: number
-          cdServicoPai: number | null
-          dsServico: string
-          dtCreatedAt: string
-          vrServico: number | null
-        }
-        Insert: {
-          cdEmpresa: number
-          cdServico?: number
-          cdServicoPai?: number | null
-          dsServico?: string
-          dtCreatedAt?: string
-          vrServico?: number | null
-        }
-        Update: {
-          cdEmpresa?: number
-          cdServico?: number
-          cdServicoPai?: number | null
-          dsServico?: string
-          dtCreatedAt?: string
-          vrServico?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "Servico_cdEmpresa_fkey"
-            columns: ["cdEmpresa"]
-            isOneToOne: false
-            referencedRelation: "Empresa"
-            referencedColumns: ["cdEmpresa"]
-          },
-          {
-            foreignKeyName: "Servico_cdServicoPai_fkey"
-            columns: ["cdServicoPai"]
-            isOneToOne: false
-            referencedRelation: "Servico"
-            referencedColumns: ["cdServico"]
-          },
-        ]
-      }
     }
     Views: {
-      consultaagendamentopet: {
-        Row: {
-          cdAgendamento: number | null
-          cdCliente: number | null
-          dsServico: string | null
-          dtStart: string | null
-          flComparecimento: boolean | null
-          nmPet: string | null
-          nuTelefoneWhatsapp: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "Agendamento_cdCliente_fkey"
-            columns: ["cdCliente"]
-            isOneToOne: false
-            referencedRelation: "Clientes"
-            referencedColumns: ["cdCliente"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       is_admin: {
