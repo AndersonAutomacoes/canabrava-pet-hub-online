@@ -36,28 +36,37 @@ const PetSelection: React.FC<PetSelectionProps> = ({ selectedPet, onPetSelect })
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user) {
-      fetchPets();
-    }
-  }, [user]);
+    fetchPets();
+  }, []);
 
   const fetchPets = async () => {
     try {
       setLoading(true);
-      // Por enquanto, buscar todos os pets para demonstração
-      // Em uma implementação real, seria filtrado por cliente
+      console.log('Buscando pets...');
+      
       const { data, error } = await supabase
         .from('Pet')
         .select('*')
         .order('nmPet');
 
-      if (error) throw error;
+      console.log('Resultado da busca de pets:', { data, error });
+
+      if (error) {
+        console.error('Erro ao buscar pets:', error);
+        toast({
+          title: "Erro",
+          description: `Erro ao carregar pets: ${error.message}`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
       setPets(data || []);
     } catch (error) {
-      console.error('Erro ao buscar pets:', error);
+      console.error('Erro inesperado ao buscar pets:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível carregar os pets.",
+        description: "Erro inesperado ao carregar os pets.",
         variant: "destructive",
       });
     } finally {
@@ -76,20 +85,34 @@ const PetSelection: React.FC<PetSelectionProps> = ({ selectedPet, onPetSelect })
     }
 
     try {
-      // Para demonstração, usar cliente ID fixo
-      // Em implementação real, seria obtido do perfil do usuário
+      console.log('Adicionando novo pet:', newPet);
+      
+      const petData = {
+        cdCliente: 1, // ID fixo para demonstração
+        nmPet: newPet.nmPet.trim(),
+        nmRaca: newPet.nmRaca.trim() || null,
+        dsPorte: newPet.dsPorte
+      };
+
+      console.log('Dados do pet para inserção:', petData);
+
       const { data, error } = await supabase
         .from('Pet')
-        .insert({
-          cdCliente: 1, // ID fixo para demonstração
-          nmPet: newPet.nmPet,
-          nmRaca: newPet.nmRaca || null,
-          dsPorte: newPet.dsPorte
-        })
+        .insert(petData)
         .select()
         .single();
 
-      if (error) throw error;
+      console.log('Resultado da inserção do pet:', { data, error });
+
+      if (error) {
+        console.error('Erro ao adicionar pet:', error);
+        toast({
+          title: "Erro",
+          description: `Erro ao adicionar pet: ${error.message}`,
+          variant: "destructive",
+        });
+        return;
+      }
 
       setPets([...pets, data]);
       setNewPet({ nmPet: '', nmRaca: '', dsPorte: 'PEQUENO' });
@@ -103,10 +126,10 @@ const PetSelection: React.FC<PetSelectionProps> = ({ selectedPet, onPetSelect })
       // Selecionar automaticamente o pet recém-criado
       onPetSelect(data.cdPet.toString());
     } catch (error) {
-      console.error('Erro ao adicionar pet:', error);
+      console.error('Erro inesperado ao adicionar pet:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível adicionar o pet.",
+        description: "Erro inesperado ao adicionar o pet.",
         variant: "destructive",
       });
     }

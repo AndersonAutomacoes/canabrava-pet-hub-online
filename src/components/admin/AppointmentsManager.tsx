@@ -46,15 +46,28 @@ export const AppointmentsManager = () => {
   const fetchAppointments = async () => {
     setLoading(true);
     try {
+      console.log('Buscando agendamentos...');
+      
       const { data, error } = await supabase
         .from('Agendamento')
         .select('*')
         .order('dtStart', { ascending: false });
 
-      if (error) throw error;
+      console.log('Resultado da busca de agendamentos:', { data, error });
+
+      if (error) {
+        console.error('Erro ao buscar agendamentos:', error);
+        toast({
+          title: "Erro",
+          description: `Erro ao carregar agendamentos: ${error.message}`,
+          variant: "destructive",
+        });
+        return;
+      }
+      
       setAppointments(data || []);
     } catch (error) {
-      console.error('Erro ao buscar agendamentos:', error);
+      console.error('Erro inesperado ao buscar agendamentos:', error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar os agendamentos.",
@@ -67,15 +80,23 @@ export const AppointmentsManager = () => {
 
   const fetchServices = async () => {
     try {
+      console.log('Buscando serviços...');
+      
       const { data, error } = await supabase
         .from('servico')
         .select('cdservico, dsservico')
         .order('dsservico');
 
-      if (error) throw error;
+      console.log('Resultado da busca de serviços:', { data, error });
+
+      if (error) {
+        console.error('Erro ao buscar serviços:', error);
+        return;
+      }
+      
       setServices(data || []);
     } catch (error) {
-      console.error('Erro ao buscar serviços:', error);
+      console.error('Erro inesperado ao buscar serviços:', error);
     }
   };
 
@@ -86,22 +107,49 @@ export const AppointmentsManager = () => {
 
   const handleCreateAppointment = async () => {
     try {
+      if (!formData.dtStart || !formData.cdservico) {
+        toast({
+          title: "Campos obrigatórios",
+          description: "Data/hora e serviço são obrigatórios.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Criando agendamento:', formData);
+
       const startDateTime = new Date(formData.dtStart);
       const endDateTime = new Date(startDateTime);
       endDateTime.setHours(startDateTime.getHours() + 1);
 
-      const { error } = await supabase
-        .from('Agendamento')
-        .insert([{
-          cdEmpresa: 1,
-          cdCliente: 1,
-          cdPet: 1,
-          cdServico: parseInt(formData.cdservico),
-          dtStart: startDateTime.toISOString(),
-          dtEnd: endDateTime.toISOString(),
-        }]);
+      const appointmentData = {
+        cdEmpresa: 1,
+        cdCliente: 1,
+        cdPet: 1,
+        cdServico: parseInt(formData.cdservico),
+        dtStart: startDateTime.toISOString(),
+        dtEnd: endDateTime.toISOString(),
+        flComparecimento: false
+      };
 
-      if (error) throw error;
+      console.log('Dados do agendamento para inserção:', appointmentData);
+
+      const { data, error } = await supabase
+        .from('Agendamento')
+        .insert(appointmentData)
+        .select();
+
+      console.log('Resultado da inserção do agendamento:', { data, error });
+
+      if (error) {
+        console.error('Erro ao criar agendamento:', error);
+        toast({
+          title: "Erro",
+          description: `Erro ao criar agendamento: ${error.message}`,
+          variant: "destructive",
+        });
+        return;
+      }
 
       toast({
         title: "Agendamento criado!",
@@ -116,9 +164,9 @@ export const AppointmentsManager = () => {
         nmPet: '',
         nuTelefoneWhatsapp: ''
       });
-      fetchAppointments();
+      await fetchAppointments();
     } catch (error) {
-      console.error('Erro ao criar agendamento:', error);
+      console.error('Erro inesperado ao criar agendamento:', error);
       toast({
         title: "Erro",
         description: "Não foi possível criar o agendamento.",
@@ -216,6 +264,13 @@ export const AppointmentsManager = () => {
                     </TableCell>
                   </TableRow>
                 ))}
+                {filteredAppointments.length === 0 && !loading && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                      {searchTerm ? 'Nenhum agendamento encontrado com esse termo' : 'Nenhum agendamento cadastrado'}
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           )}
@@ -233,7 +288,7 @@ export const AppointmentsManager = () => {
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="datetime" className="text-right">
-                Data/Hora
+                Data/Hora *
               </Label>
               <Input
                 id="datetime"
@@ -245,7 +300,7 @@ export const AppointmentsManager = () => {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="service" className="text-right">
-                Serviço
+                Serviço *
               </Label>
               <Select value={formData.cdservico} onValueChange={(value) => setFormData(prev => ({ ...prev, cdservico: value }))}>
                 <SelectTrigger className="col-span-3">
@@ -286,7 +341,10 @@ export const AppointmentsManager = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={handleCreateAppointment}>
+            <Button variant="outline" onClick={() => setShowForm(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateAppointment} className="bg-green-600 hover:bg-green-700">
               Criar Agendamento
             </Button>
           </DialogFooter>
