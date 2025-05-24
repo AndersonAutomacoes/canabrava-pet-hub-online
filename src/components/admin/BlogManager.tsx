@@ -30,7 +30,7 @@ interface BlogPost {
 }
 
 export const BlogManager = () => {
-  const { posts, loading, refetch } = useBlog();
+  const { posts, loading, fetchPosts } = useBlog();
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
@@ -105,7 +105,7 @@ export const BlogManager = () => {
         slug: '',
         publicado: false
       });
-      refetch();
+      fetchPosts(false);
     } catch (error) {
       console.error('Erro ao criar post:', error);
       toast({
@@ -168,7 +168,7 @@ export const BlogManager = () => {
         slug: '',
         publicado: false
       });
-      refetch();
+      fetchPosts(false);
     } catch (error) {
       console.error('Erro ao atualizar post:', error);
       toast({
@@ -195,7 +195,7 @@ export const BlogManager = () => {
         description: "O post foi excluído com sucesso.",
       });
 
-      refetch();
+      fetchPosts(false);
     } catch (error) {
       console.error('Erro ao excluir post:', error);
       toast({
@@ -220,7 +220,7 @@ export const BlogManager = () => {
         description: `O post foi ${post.publicado ? 'despublicado' : 'publicado'} com sucesso.`,
       });
 
-      refetch();
+      fetchPosts(false);
     } catch (error) {
       console.error('Erro ao alterar status:', error);
       toast({
