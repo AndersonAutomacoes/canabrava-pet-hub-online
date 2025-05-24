@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +11,7 @@ import { useCart } from '@/hooks/useCart';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import FreteCalculator from './FreteCalculator';
 
 const CheckoutFlow = () => {
   const [step, setStep] = useState(1);
@@ -25,10 +25,23 @@ const CheckoutFlow = () => {
   });
   const [paymentMethod, setPaymentMethod] = useState('');
   const [observations, setObservations] = useState('');
+  const [freteValor, setFreteValor] = useState(0);
+  const [fretePrazo, setFretePrazo] = useState(1);
   
   const { cartItems, getCartTotal, clearCart } = useCart();
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // Calcular peso total dos produtos
+  const pesoTotal = cartItems.reduce((total, item) => {
+    const peso = item.produto.peso || 0.5; // peso padrão de 0.5kg se não especificado
+    return total + (peso * item.quantidade);
+  }, 0);
+
+  const handleFreteCalculado = (valor: number, prazo: number) => {
+    setFreteValor(valor);
+    setFretePrazo(prazo);
+  };
 
   const handleAddressSubmit = () => {
     if (!deliveryAddress.endereco || !deliveryAddress.cep) {
@@ -67,8 +80,10 @@ const CheckoutFlow = () => {
     setLoading(true);
     
     try {
-      // Criar pedido
-      const total = getCartTotal();
+      // Criar pedido com valor do frete incluído
+      const subtotal = getCartTotal();
+      const total = subtotal + freteValor;
+      
       const { data: pedido, error: pedidoError } = await supabase
         .from('pedidos')
         .insert({
@@ -155,6 +170,7 @@ const CheckoutFlow = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
+      {/* ... keep existing code (step indicator) */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
           {[1, 2, 3].map((stepNumber) => (
@@ -182,71 +198,80 @@ const CheckoutFlow = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           {step === 1 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <MapPin className="w-5 h-5" />
-                  <span>Endereço de Entrega</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="endereco">Endereço *</Label>
-                  <Input
-                    id="endereco"
-                    value={deliveryAddress.endereco}
-                    onChange={(e) => setDeliveryAddress({...deliveryAddress, endereco: e.target.value})}
-                    placeholder="Rua, número, bairro"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <MapPin className="w-5 h-5" />
+                    <span>Endereço de Entrega</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="cidade">Cidade</Label>
+                    <Label htmlFor="endereco">Endereço *</Label>
                     <Input
-                      id="cidade"
-                      value={deliveryAddress.cidade}
-                      onChange={(e) => setDeliveryAddress({...deliveryAddress, cidade: e.target.value})}
+                      id="endereco"
+                      value={deliveryAddress.endereco}
+                      onChange={(e) => setDeliveryAddress({...deliveryAddress, endereco: e.target.value})}
+                      placeholder="Rua, número, bairro"
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="estado">Estado</Label>
-                    <Input
-                      id="estado"
-                      value={deliveryAddress.estado}
-                      onChange={(e) => setDeliveryAddress({...deliveryAddress, estado: e.target.value})}
-                    />
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="cidade">Cidade</Label>
+                      <Input
+                        id="cidade"
+                        value={deliveryAddress.cidade}
+                        onChange={(e) => setDeliveryAddress({...deliveryAddress, cidade: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="estado">Estado</Label>
+                      <Input
+                        id="estado"
+                        value={deliveryAddress.estado}
+                        onChange={(e) => setDeliveryAddress({...deliveryAddress, estado: e.target.value})}
+                      />
+                    </div>
                   </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="cep">CEP *</Label>
-                    <Input
-                      id="cep"
-                      value={deliveryAddress.cep}
-                      onChange={(e) => setDeliveryAddress({...deliveryAddress, cep: e.target.value})}
-                      placeholder="00000-000"
-                    />
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="cep">CEP *</Label>
+                      <Input
+                        id="cep"
+                        value={deliveryAddress.cep}
+                        onChange={(e) => setDeliveryAddress({...deliveryAddress, cep: e.target.value})}
+                        placeholder="00000-000"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="complemento">Complemento</Label>
+                      <Input
+                        id="complemento"
+                        value={deliveryAddress.complemento}
+                        onChange={(e) => setDeliveryAddress({...deliveryAddress, complemento: e.target.value})}
+                        placeholder="Apt, casa, etc."
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="complemento">Complemento</Label>
-                    <Input
-                      id="complemento"
-                      value={deliveryAddress.complemento}
-                      onChange={(e) => setDeliveryAddress({...deliveryAddress, complemento: e.target.value})}
-                      placeholder="Apt, casa, etc."
-                    />
-                  </div>
-                </div>
 
-                <Button onClick={handleAddressSubmit} className="w-full bg-green-600 hover:bg-green-700">
-                  Continuar para Pagamento
-                </Button>
-              </CardContent>
-            </Card>
+                  <Button onClick={handleAddressSubmit} className="w-full bg-green-600 hover:bg-green-700">
+                    Continuar para Pagamento
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Calculadora de Frete */}
+              <FreteCalculator 
+                pesoTotal={pesoTotal}
+                onFreteCalculado={handleFreteCalculado}
+              />
+            </div>
           )}
 
+          {/* ... keep existing code for steps 2 and 3 */}
           {step === 2 && (
             <Card>
               <CardHeader>
@@ -322,6 +347,18 @@ const CheckoutFlow = () => {
                   </p>
                 </div>
 
+                {freteValor > 0 && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h3 className="font-semibold mb-2">Entrega</h3>
+                      <p className="text-gray-700">
+                        Frete: R$ {freteValor.toFixed(2)} - {fretePrazo === 1 ? '24 horas' : `${fretePrazo} dias úteis`}
+                      </p>
+                    </div>
+                  </>
+                )}
+
                 {observations && (
                   <>
                     <Separator />
@@ -349,7 +386,7 @@ const CheckoutFlow = () => {
           )}
         </div>
 
-        {/* Resumo do Pedido */}
+        {/* Resumo do Pedido - Atualizado com frete */}
         <div>
           <Card>
             <CardHeader>
@@ -370,10 +407,39 @@ const CheckoutFlow = () => {
               
               <Separator />
               
+              <div className="flex justify-between items-center">
+                <span>Subtotal:</span>
+                <span>R$ {getCartTotal().toFixed(2)}</span>
+              </div>
+              
+              {freteValor > 0 && (
+                <div className="flex justify-between items-center">
+                  <span>Frete:</span>
+                  <span>R$ {freteValor.toFixed(2)}</span>
+                </div>
+              )}
+              
+              {freteValor === 0 && step > 1 && (
+                <div className="flex justify-between items-center text-green-600">
+                  <span>Frete:</span>
+                  <span className="font-semibold">GRÁTIS</span>
+                </div>
+              )}
+              
+              <Separator />
+              
               <div className="flex justify-between items-center font-bold text-lg">
                 <span>Total:</span>
-                <span className="text-green-600">R$ {getCartTotal().toFixed(2)}</span>
+                <span className="text-green-600">
+                  R$ {(getCartTotal() + freteValor).toFixed(2)}
+                </span>
               </div>
+
+              {pesoTotal > 0 && (
+                <div className="text-xs text-gray-500 mt-2">
+                  Peso total: {pesoTotal.toFixed(2)} kg
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

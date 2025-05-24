@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Heart, Star, ArrowLeft, Plus, Minus } from 'lucide-react';
+import { ShoppingCart, Heart, Star, ArrowLeft, Plus, Minus, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/hooks/useCart';
 import ProductReviews from './ProductReviews';
@@ -18,6 +17,7 @@ interface Product {
   estoque: number;
   tipo_pet?: string;
   imagens?: string[];
+  peso?: number;
 }
 
 interface ProductDetailsProps {
@@ -125,6 +125,14 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ product, onBack }) => {
                 <h3 className="font-semibold mb-2">Descrição</h3>
                 <p className="text-gray-700">{product.descricao}</p>
               </div>
+
+              {/* Peso do produto */}
+              {product.peso && (
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Package className="w-4 h-4" />
+                  <span>Peso: {product.peso.toFixed(2)} kg</span>
+                </div>
+              )}
 
               {/* Estoque */}
               <div className={`text-sm font-semibold ${

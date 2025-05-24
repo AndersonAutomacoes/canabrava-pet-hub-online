@@ -248,6 +248,48 @@ export type Database = {
           },
         ]
       }
+      frete_configuracoes: {
+        Row: {
+          ativo: boolean
+          cep_destino_fim: string
+          cep_destino_inicio: string
+          cep_origem: string
+          created_at: string
+          descricao: string | null
+          id: string
+          prazo_dias: number
+          updated_at: string
+          valor_fixo: number
+          valor_por_kg: number
+        }
+        Insert: {
+          ativo?: boolean
+          cep_destino_fim: string
+          cep_destino_inicio: string
+          cep_origem: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          prazo_dias?: number
+          updated_at?: string
+          valor_fixo?: number
+          valor_por_kg?: number
+        }
+        Update: {
+          ativo?: boolean
+          cep_destino_fim?: string
+          cep_destino_inicio?: string
+          cep_origem?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          prazo_dias?: number
+          updated_at?: string
+          valor_fixo?: number
+          valor_por_kg?: number
+        }
+        Relationships: []
+      }
       pedido_itens: {
         Row: {
           id: string
