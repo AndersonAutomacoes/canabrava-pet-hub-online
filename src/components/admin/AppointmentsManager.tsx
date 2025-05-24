@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,9 +27,22 @@ interface Service {
   dsservico: string;
 }
 
+interface Cliente {
+  cdCliente: number;
+  dsNome?: string;
+}
+
+interface Pet {
+  cdPet: number;
+  nmPet: string;
+  cdCliente: number;
+}
+
 export const AppointmentsManager = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -38,13 +50,78 @@ export const AppointmentsManager = () => {
     dtStart: '',
     dtEnd: '',
     cdservico: '',
+    cdCliente: '',
+    cdPet: '',
     nmPet: '',
     nuTelefoneWhatsapp: ''
   });
   const { toast } = useToast();
 
-  const fetchAppointments = async () => {
+  useEffect(() => {
+    fetchInitialData();
+  }, []);
+
+  const fetchInitialData = async () => {
     setLoading(true);
+    try {
+      await Promise.all([
+        fetchAppointments(),
+        fetchServices(),
+        fetchClientes(),
+        fetchPets()
+      ]);
+    } catch (error) {
+      console.error('Erro ao carregar dados iniciais:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchClientes = async () => {
+    try {
+      console.log('Buscando clientes...');
+      
+      const { data, error } = await supabase
+        .from('Clientes')
+        .select('cdCliente, dsNome')
+        .order('dsNome');
+
+      console.log('Resultado da busca de clientes:', { data, error });
+
+      if (error) {
+        console.error('Erro ao buscar clientes:', error);
+        return;
+      }
+      
+      setClientes(data || []);
+    } catch (error) {
+      console.error('Erro inesperado ao buscar clientes:', error);
+    }
+  };
+
+  const fetchPets = async () => {
+    try {
+      console.log('Buscando pets...');
+      
+      const { data, error } = await supabase
+        .from('Pet')
+        .select('cdPet, nmPet, cdCliente')
+        .order('nmPet');
+
+      console.log('Resultado da busca de pets:', { data, error });
+
+      if (error) {
+        console.error('Erro ao buscar pets:', error);
+        return;
+      }
+      
+      setPets(data || []);
+    } catch (error) {
+      console.error('Erro inesperado ao buscar pets:', error);
+    }
+  };
+
+  const fetchAppointments = async () => {
     try {
       console.log('Buscando agendamentos...');
       
@@ -73,8 +150,6 @@ export const AppointmentsManager = () => {
         description: "Não foi possível carregar os agendamentos.",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -100,10 +175,68 @@ export const AppointmentsManager = () => {
     }
   };
 
-  useEffect(() => {
-    fetchAppointments();
-    fetchServices();
-  }, []);
+  const ensureRequiredData = async () => {
+    let clienteId = null;
+    let petId = null;
+
+    // Verificar se existe cliente, senão criar um
+    if (clientes.length === 0) {
+      try {
+        console.log('Criando cliente padrão...');
+        
+        const { data: newCliente, error: clienteError } = await supabase
+          .from('Clientes')
+          .insert({
+            dsNome: 'Cliente Padrão',
+            nuTelefoneWhatsapp: '(11) 99999-9999',
+            cdEmpresa: 1
+          })
+          .select()
+          .single();
+
+        if (clienteError) throw clienteError;
+        
+        setClientes([newCliente]);
+        clienteId = newCliente.cdCliente;
+        console.log('Cliente padrão criado:', newCliente);
+      } catch (error) {
+        console.error('Erro ao criar cliente padrão:', error);
+        throw new Error('Não foi possível criar cliente padrão');
+      }
+    } else {
+      clienteId = clientes[0].cdCliente;
+    }
+
+    // Verificar se existe pet, senão criar um
+    if (pets.length === 0) {
+      try {
+        console.log('Criando pet padrão...');
+        
+        const { data: newPet, error: petError } = await supabase
+          .from('Pet')
+          .insert({
+            cdCliente: clienteId,
+            nmPet: 'Pet Padrão',
+            dsPorte: 'MEDIO'
+          })
+          .select()
+          .single();
+
+        if (petError) throw petError;
+        
+        setPets([newPet]);
+        petId = newPet.cdPet;
+        console.log('Pet padrão criado:', newPet);
+      } catch (error) {
+        console.error('Erro ao criar pet padrão:', error);
+        throw new Error('Não foi possível criar pet padrão');
+      }
+    } else {
+      petId = pets[0].cdPet;
+    }
+
+    return { clienteId, petId };
+  };
 
   const handleCreateAppointment = async () => {
     try {
@@ -118,14 +251,17 @@ export const AppointmentsManager = () => {
 
       console.log('Criando agendamento:', formData);
 
+      // Garantir que temos dados necessários
+      const { clienteId, petId } = await ensureRequiredData();
+
       const startDateTime = new Date(formData.dtStart);
       const endDateTime = new Date(startDateTime);
       endDateTime.setHours(startDateTime.getHours() + 1);
 
       const appointmentData = {
         cdEmpresa: 1,
-        cdCliente: 1,
-        cdPet: 1,
+        cdCliente: clienteId,
+        cdPet: petId,
         cdServico: parseInt(formData.cdservico),
         dtStart: startDateTime.toISOString(),
         dtEnd: endDateTime.toISOString(),
@@ -161,6 +297,8 @@ export const AppointmentsManager = () => {
         dtStart: '',
         dtEnd: '',
         cdservico: '',
+        cdCliente: '',
+        cdPet: '',
         nmPet: '',
         nuTelefoneWhatsapp: ''
       });
@@ -169,7 +307,7 @@ export const AppointmentsManager = () => {
       console.error('Erro inesperado ao criar agendamento:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível criar o agendamento.",
+        description: error instanceof Error ? error.message : "Não foi possível criar o agendamento.",
         variant: "destructive",
       });
     }
@@ -180,6 +318,8 @@ export const AppointmentsManager = () => {
       dtStart: '',
       dtEnd: '',
       cdservico: '',
+      cdCliente: '',
+      cdPet: '',
       nmPet: '',
       nuTelefoneWhatsapp: ''
     });
@@ -315,30 +455,44 @@ export const AppointmentsManager = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="pet" className="text-right">
-                Pet
-              </Label>
-              <Input
-                id="pet"
-                value={formData.nmPet}
-                onChange={(e) => setFormData(prev => ({ ...prev, nmPet: e.target.value }))}
-                className="col-span-3"
-                placeholder="Nome do pet"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="phone" className="text-right">
-                Telefone
-              </Label>
-              <Input
-                id="phone"
-                value={formData.nuTelefoneWhatsapp}
-                onChange={(e) => setFormData(prev => ({ ...prev, nuTelefoneWhatsapp: e.target.value }))}
-                className="col-span-3"
-                placeholder="(11) 99999-9999"
-              />
-            </div>
+            {clientes.length > 0 && (
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="cliente" className="text-right">
+                  Cliente
+                </Label>
+                <Select value={formData.cdCliente} onValueChange={(value) => setFormData(prev => ({ ...prev, cdCliente: value }))}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Selecione um cliente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clientes.map((cliente) => (
+                      <SelectItem key={cliente.cdCliente} value={cliente.cdCliente.toString()}>
+                        {cliente.dsNome || `Cliente ${cliente.cdCliente}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {pets.length > 0 && (
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="pet" className="text-right">
+                  Pet
+                </Label>
+                <Select value={formData.cdPet} onValueChange={(value) => setFormData(prev => ({ ...prev, cdPet: value }))}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Selecione um pet" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pets.map((pet) => (
+                      <SelectItem key={pet.cdPet} value={pet.cdPet.toString()}>
+                        {pet.nmPet}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowForm(false)}>

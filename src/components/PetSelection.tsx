@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,6 +17,11 @@ interface Pet {
   dsPorte?: string;
 }
 
+interface Cliente {
+  cdCliente: number;
+  dsNome?: string;
+}
+
 interface PetSelectionProps {
   selectedPet: string;
   onPetSelect: (petId: string) => void;
@@ -25,6 +29,7 @@ interface PetSelectionProps {
 
 const PetSelection: React.FC<PetSelectionProps> = ({ selectedPet, onPetSelect }) => {
   const [pets, setPets] = useState<Pet[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddPet, setShowAddPet] = useState(false);
   const [newPet, setNewPet] = useState({
@@ -36,12 +41,44 @@ const PetSelection: React.FC<PetSelectionProps> = ({ selectedPet, onPetSelect })
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchPets();
+    fetchInitialData();
   }, []);
+
+  const fetchInitialData = async () => {
+    try {
+      setLoading(true);
+      await Promise.all([fetchPets(), fetchClientes()]);
+    } catch (error) {
+      console.error('Erro ao carregar dados iniciais:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchClientes = async () => {
+    try {
+      console.log('Buscando clientes...');
+      
+      const { data, error } = await supabase
+        .from('Clientes')
+        .select('cdCliente, dsNome')
+        .order('cdCliente');
+
+      console.log('Resultado da busca de clientes:', { data, error });
+
+      if (error) {
+        console.error('Erro ao buscar clientes:', error);
+        return;
+      }
+      
+      setClientes(data || []);
+    } catch (error) {
+      console.error('Erro inesperado ao buscar clientes:', error);
+    }
+  };
 
   const fetchPets = async () => {
     try {
-      setLoading(true);
       console.log('Buscando pets...');
       
       const { data, error } = await supabase
@@ -69,9 +106,45 @@ const PetSelection: React.FC<PetSelectionProps> = ({ selectedPet, onPetSelect })
         description: "Erro inesperado ao carregar os pets.",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
+  };
+
+  const ensureClientExists = async () => {
+    if (clientes.length === 0) {
+      // Criar um cliente padrão se não existir nenhum
+      try {
+        console.log('Criando cliente padrão...');
+        
+        const { data, error } = await supabase
+          .from('Clientes')
+          .insert({
+            dsNome: 'Cliente Padrão',
+            nuTelefoneWhatsapp: '(11) 99999-9999',
+            cdEmpresa: 1
+          })
+          .select()
+          .single();
+
+        console.log('Resultado da criação do cliente:', { data, error });
+
+        if (error) {
+          throw error;
+        }
+
+        setClientes([data]);
+        return data.cdCliente;
+      } catch (error) {
+        console.error('Erro ao criar cliente padrão:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao criar cliente padrão.",
+          variant: "destructive",
+        });
+        return null;
+      }
+    }
+    
+    return clientes[0].cdCliente;
   };
 
   const handleAddPet = async () => {
@@ -87,8 +160,19 @@ const PetSelection: React.FC<PetSelectionProps> = ({ selectedPet, onPetSelect })
     try {
       console.log('Adicionando novo pet:', newPet);
       
+      // Garantir que existe um cliente válido
+      const cdCliente = await ensureClientExists();
+      if (!cdCliente) {
+        toast({
+          title: "Erro",
+          description: "Não foi possível criar ou encontrar um cliente válido.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const petData = {
-        cdCliente: 1, // ID fixo para demonstração
+        cdCliente: cdCliente,
         nmPet: newPet.nmPet.trim(),
         nmRaca: newPet.nmRaca.trim() || null,
         dsPorte: newPet.dsPorte
