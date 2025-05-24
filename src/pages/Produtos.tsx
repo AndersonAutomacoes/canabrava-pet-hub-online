@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,10 @@ import { useCart } from '@/hooks/useCart';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductDetails from '@/components/ProductDetails';
+import PageLayout from '@/components/PageLayout';
+import SearchBar from '@/components/SearchBar';
+import LoadingCard from '@/components/LoadingCard';
+import EmptyState from '@/components/EmptyState';
 
 interface Produto {
   id: string;
@@ -110,16 +113,30 @@ const Produtos = () => {
   // Se um produto está selecionado, mostrar detalhes
   if (selectedProduct) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-green-50">
-        <Header />
-        <main className="container mx-auto px-4 py-8">
-          <ProductDetails 
-            product={selectedProduct} 
-            onBack={() => setSelectedProduct(null)}
-          />
-        </main>
-        <Footer />
-      </div>
+      <PageLayout
+        title="Detalhes do Produto"
+        breadcrumbs={[
+          { label: 'Produtos', href: '/produtos' },
+          { label: selectedProduct.nome, current: true }
+        ]}
+      >
+        <ProductDetails 
+          product={selectedProduct} 
+          onBack={() => setSelectedProduct(null)}
+        />
+      </PageLayout>
+    );
+  }
+
+  if (loading) {
+    return (
+      <PageLayout title="Nossos Produtos" subtitle="Carregando produtos...">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <LoadingCard key={index} />
+          ))}
+        </div>
+      </PageLayout>
     );
   }
 
@@ -135,74 +152,55 @@ const Produtos = () => {
   const categories = [...new Set(produtos.map(p => p.categoria))];
   const tiposPet = ['cao', 'gato', 'ambos'];
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-green-50">
-        <Header />
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-            <p>Carregando produtos...</p>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-green-50">
-      <Header />
-      
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">Nossos Produtos</h1>
-          
-          {/* Filtros */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Buscar produtos..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger>
-                <SelectValue placeholder="Categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Todas as categorias</SelectItem>
-                {categories.map(category => (
-                  <SelectItem key={category} value={category}>
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <Select value={selectedTipoPet} onValueChange={setSelectedTipoPet}>
-              <SelectTrigger>
-                <SelectValue placeholder="Tipo de Pet" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Todos os pets</SelectItem>
-                <SelectItem value="cao">Cães</SelectItem>
-                <SelectItem value="gato">Gatos</SelectItem>
-                <SelectItem value="ambos">Ambos</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <div className="text-sm text-gray-600 flex items-center">
-              {filteredProdutos.length} produto(s) encontrado(s)
-            </div>
-          </div>
+    <PageLayout
+      title="Nossos Produtos"
+      subtitle="Encontre tudo o que seu pet precisa"
+      breadcrumbs={[
+        { label: 'Produtos', current: true }
+      ]}
+    >
+      {/* Filtros */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <SearchBar
+          placeholder="Buscar produtos..."
+          onSearch={(query) => setSearchTerm(query)}
+          onClear={() => setSearchTerm('')}
+        />
+        
+        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <SelectTrigger>
+            <SelectValue placeholder="Categoria" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Todas as categorias</SelectItem>
+            {categories.map(category => (
+              <SelectItem key={category} value={category}>
+                {category.charAt(0).toUpperCase() + category.slice(1)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        
+        <Select value={selectedTipoPet} onValueChange={setSelectedTipoPet}>
+          <SelectTrigger>
+            <SelectValue placeholder="Tipo de Pet" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Todos os pets</SelectItem>
+            <SelectItem value="cao">Cães</SelectItem>
+            <SelectItem value="gato">Gatos</SelectItem>
+            <SelectItem value="ambos">Ambos</SelectItem>
+          </SelectContent>
+        </Select>
+        
+        <div className="text-sm text-gray-600 flex items-center justify-center bg-gray-50 rounded-lg px-4">
+          {filteredProdutos.length} produto(s) encontrado(s)
         </div>
+      </div>
 
-        {/* Grid de Produtos */}
+      {/* Grid de Produtos */}
+      {filteredProdutos.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredProdutos.map((produto) => (
             <Card key={produto.id} className="hover:shadow-lg transition-shadow">
@@ -256,22 +254,23 @@ const Produtos = () => {
             </Card>
           ))}
         </div>
-
-        {filteredProdutos.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">
-              Nenhum produto encontrado
-            </h3>
-            <p className="text-gray-500">
-              Tente ajustar os filtros ou buscar por outros termos.
-            </p>
-          </div>
-        )}
-      </main>
-      
-      <Footer />
-    </div>
+      ) : (
+        <EmptyState
+          icon={<div className="text-6xl">🔍</div>}
+          title="Nenhum produto encontrado"
+          description="Tente ajustar os filtros ou buscar por outros termos."
+          action={
+            <Button onClick={() => {
+              setSearchTerm('');
+              setSelectedCategory('');
+              setSelectedTipoPet('');
+            }}>
+              Limpar Filtros
+            </Button>
+          }
+        />
+      )}
+    </PageLayout>
   );
 };
 

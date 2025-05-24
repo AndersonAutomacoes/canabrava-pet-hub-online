@@ -1,7 +1,6 @@
 
 import React from 'react';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+import { PageLayout } from '@/components/layout/PageLayout';
 import CheckoutFlow from '@/components/CheckoutFlow';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,62 +12,54 @@ const Checkout = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen pet-gradient-bg">
-        <Header />
-        <div className="pet-container py-12">
-          <div className="max-w-md mx-auto">
-            <Card className="pet-card border-0 shadow-medium">
-              <CardHeader className="text-center pb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Lock className="w-8 h-8 text-white" />
-                </div>
-                <CardTitle className="text-xl text-gray-800">
-                  Login Necessário
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-center">
-                <p className="text-gray-600 mb-6">
-                  Para finalizar sua compra de forma segura, você precisa estar logado em sua conta.
-                </p>
-                <Button 
-                  className="w-full pet-button-primary h-12 text-base"
-                  onClick={() => window.location.href = '/auth'}
-                >
-                  Fazer Login
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-        <Footer />
-      </div>
+      <PageLayout
+        title="Login Necessário"
+        subtitle="Para finalizar sua compra de forma segura"
+        containerSize="sm"
+      >
+        <Card className="pet-card border-0 shadow-medium">
+          <CardHeader className="text-center pb-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Lock className="w-8 h-8 text-white" />
+            </div>
+            <CardTitle className="text-xl text-gray-800">
+              Acesso Restrito
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="text-gray-600 mb-6">
+              Para finalizar sua compra de forma segura, você precisa estar logado em sua conta.
+            </p>
+            <Button 
+              className="w-full pet-button-primary h-12 text-base"
+              onClick={() => window.location.href = '/auth'}
+            >
+              Fazer Login
+            </Button>
+          </CardContent>
+        </Card>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="min-h-screen pet-gradient-bg">
-      <Header />
-      
-      <main className="pet-container py-8 lg:py-12">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center mb-4">
-              <ShieldCheck className="w-8 h-8 text-green-600 mr-3" />
-              <h1 className="text-3xl lg:text-4xl font-bold text-gray-800 gradient-text">
-                Finalizar Compra
-              </h1>
-            </div>
-            <p className="text-gray-600 text-lg">
-              Ambiente seguro e protegido para finalizar seu pedido
-            </p>
-          </div>
-          
-          <CheckoutFlow />
+    <PageLayout
+      title="Finalizar Compra"
+      subtitle="Ambiente seguro e protegido para finalizar seu pedido"
+      breadcrumbs={[
+        { label: 'Carrinho', href: '/carrinho' },
+        { label: 'Checkout', current: true }
+      ]}
+      headerActions={
+        <div className="flex items-center text-green-600">
+          <ShieldCheck className="w-5 h-5 mr-2" />
+          <span className="text-sm font-medium">Compra Segura</span>
         </div>
-      </main>
-      
-      <Footer />
-    </div>
+      }
+      containerSize="xl"
+    >
+      <CheckoutFlow />
+    </PageLayout>
   );
 };
 
