@@ -21,7 +21,7 @@ interface Order {
   profiles?: {
     nome: string;
     email: string;
-  };
+  } | null;
 }
 
 export const OrdersManager = () => {
@@ -62,11 +62,16 @@ export const OrdersManager = () => {
     fetchOrders();
   }, []);
 
-  const filteredOrders = orders.filter(order =>
-    order.profiles?.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.profiles?.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.status.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredOrders = orders.filter(order => {
+    const customerName = order.profiles?.nome?.toLowerCase() || '';
+    const customerEmail = order.profiles?.email?.toLowerCase() || '';
+    const orderStatus = order.status.toLowerCase();
+    const searchLower = searchTerm.toLowerCase();
+    
+    return customerName.includes(searchLower) ||
+           customerEmail.includes(searchLower) ||
+           orderStatus.includes(searchLower);
+  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -130,7 +135,7 @@ export const OrdersManager = () => {
                           {order.profiles?.nome || 'Cliente não encontrado'}
                         </div>
                         <div className="text-sm text-slate-500">
-                          {order.profiles?.email}
+                          {order.profiles?.email || 'Email não disponível'}
                         </div>
                       </div>
                     </TableCell>
