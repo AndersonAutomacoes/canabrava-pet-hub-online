@@ -15,6 +15,7 @@ import Produtos from "./pages/Produtos";
 import Agendamento from "./pages/Agendamento";
 import Carrinho from "./pages/Carrinho";
 import Checkout from "./pages/Checkout";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -45,6 +46,7 @@ const AppContent = () => {
                 <Route path="/agendamento" element={<Agendamento />} />
                 <Route path="/carrinho" element={<Carrinho />} />
                 <Route path="/checkout" element={<Checkout />} />
+                <Route path="/admin" element={<Admin />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <LGPDConsent />

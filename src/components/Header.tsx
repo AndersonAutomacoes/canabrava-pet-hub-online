@@ -1,199 +1,147 @@
 
 import React, { useState } from 'react';
-import { Menu, X, Phone, MapPin, ShoppingCart, User, Calendar, LogOut } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Menu, X, ShoppingCart, User, Heart, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { useCart } from '@/hooks/useCart';
+import { useAdmin } from '@/hooks/useAdmin';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { getCartItemCount } = useCart();
+  const { isAdmin } = useAdmin();
   const navigate = useNavigate();
+  const cartItemCount = getCartItemCount();
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
+  const handleAuthAction = () => {
+    if (user) {
+      signOut();
+    } else {
+      navigate('/auth');
+    }
   };
 
   return (
-    <header className="bg-white shadow-lg sticky top-0 z-50">
-      {/* Top bar with contact info */}
-      <div className="bg-green-600 text-white py-2">
-        <div className="container mx-auto px-4 flex justify-between items-center text-sm">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-1">
-              <Phone className="w-4 h-4" />
-              <span>(11) 99999-9999</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <MapPin className="w-4 h-4" />
-              <span>Rua das Flores, 123 - Canabrava</span>
-            </div>
-          </div>
-          <div className="hidden md:flex items-center space-x-4">
-            <span>Seg-Sex: 8h-18h | Sáb: 8h-16h</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Main navigation */}
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex justify-between items-center">
+    <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+      <div className="container mx-auto px-4 py-3">
+        <div className="flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate('/')}>
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-xl">🐾</span>
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center">
+              <span className="text-white text-xl">🐾</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">PetShop Canabrava</h1>
-              <p className="text-sm text-gray-600">Cuidando do seu melhor amigo</p>
+              <h1 className="text-xl font-bold text-gray-800">PetShop</h1>
+              <p className="text-xs text-gray-600">Canabrava</p>
             </div>
-          </div>
+          </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <a href="/" className="text-gray-700 hover:text-green-600 transition-colors">Início</a>
-            <a href="#services" className="text-gray-700 hover:text-green-600 transition-colors">Serviços</a>
-            <a href="/produtos" className="text-gray-700 hover:text-green-600 transition-colors">Produtos</a>
-            <a href="#blog" className="text-gray-700 hover:text-green-600 transition-colors">Blog</a>
-            <a href="#about" className="text-gray-700 hover:text-green-600 transition-colors">Sobre</a>
+          <nav className="hidden md:flex items-center space-x-6">
+            <Link to="/" className="text-gray-700 hover:text-green-600 transition-colors">
+              Início
+            </Link>
+            <Link to="/produtos" className="text-gray-700 hover:text-green-600 transition-colors">
+              Produtos
+            </Link>
+            <Link to="/agendamento" className="text-gray-700 hover:text-green-600 transition-colors">
+              Agendamento
+            </Link>
+            {user && isAdmin && (
+              <Link to="/admin" className="text-gray-700 hover:text-green-600 transition-colors flex items-center space-x-1">
+                <Settings className="w-4 h-4" />
+                <span>Admin</span>
+              </Link>
+            )}
           </nav>
 
-          {/* Action buttons */}
-          <div className="hidden md:flex items-center space-x-3">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="flex items-center space-x-1"
-              onClick={() => navigate('/agendamento')}
-            >
-              <Calendar className="w-4 h-4" />
-              <span>Agendar</span>
-            </Button>
-            
-            <Button variant="outline" size="sm" className="flex items-center space-x-1">
-              <ShoppingCart className="w-4 h-4" />
-              <span>Carrinho</span>
-            </Button>
-
-            {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex items-center space-x-1">
-                    <User className="w-4 h-4" />
-                    <span>Minha Conta</span>
+          {/* Actions */}
+          <div className="flex items-center space-x-3">
+            {user && (
+              <>
+                <Button variant="ghost" size="sm" className="relative">
+                  <Heart className="w-5 h-5" />
+                </Button>
+                <Link to="/carrinho">
+                  <Button variant="ghost" size="sm" className="relative">
+                    <ShoppingCart className="w-5 h-5" />
+                    {cartItemCount > 0 && (
+                      <Badge 
+                        variant="destructive" 
+                        className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+                      >
+                        {cartItemCount}
+                      </Badge>
+                    )}
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 bg-white">
-                  <DropdownMenuItem onClick={() => navigate('/perfil')}>
-                    <User className="w-4 h-4 mr-2" />
-                    Meu Perfil
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/meus-agendamentos')}>
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Meus Agendamentos
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    Meus Pedidos
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Sair
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex items-center space-x-1"
-                onClick={() => navigate('/auth')}
-              >
-                <User className="w-4 h-4" />
-                <span>Login</span>
-              </Button>
+                </Link>
+              </>
             )}
-          </div>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleAuthAction}
+              className="flex items-center space-x-1"
+            >
+              <User className="w-4 h-4" />
+              <span className="hidden sm:inline">
+                {user ? 'Sair' : 'Entrar'}
+              </span>
+            </Button>
 
-          {/* Mobile menu button */}
-          <button
-            className="md:hidden text-gray-700"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+            {/* Mobile menu button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="md:hidden"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </Button>
+          </div>
         </div>
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden mt-4 pt-4 border-t">
-            <nav className="flex flex-col space-y-3">
-              <a href="/" className="text-gray-700 hover:text-green-600 transition-colors">Início</a>
-              <a href="#services" className="text-gray-700 hover:text-green-600 transition-colors">Serviços</a>
-              <a href="/produtos" className="text-gray-700 hover:text-green-600 transition-colors">Produtos</a>
-              <a href="#blog" className="text-gray-700 hover:text-green-600 transition-colors">Blog</a>
-              <a href="#about" className="text-gray-700 hover:text-green-600 transition-colors">Sobre</a>
-              
-              <div className="flex flex-col space-y-2 pt-3">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex items-center justify-center space-x-1"
-                  onClick={() => navigate('/agendamento')}
+          <nav className="md:hidden mt-4 pb-4 border-t pt-4">
+            <div className="flex flex-col space-y-3">
+              <Link
+                to="/"
+                className="text-gray-700 hover:text-green-600 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Início
+              </Link>
+              <Link
+                to="/produtos"
+                className="text-gray-700 hover:text-green-600 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Produtos
+              </Link>
+              <Link
+                to="/agendamento"
+                className="text-gray-700 hover:text-green-600 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Agendamento
+              </Link>
+              {user && isAdmin && (
+                <Link
+                  to="/admin"
+                  className="text-gray-700 hover:text-green-600 transition-colors flex items-center space-x-1"
+                  onClick={() => setIsMenuOpen(false)}
                 >
-                  <Calendar className="w-4 h-4" />
-                  <span>Agendar</span>
-                </Button>
-                
-                <Button variant="outline" size="sm" className="flex items-center justify-center space-x-1">
-                  <ShoppingCart className="w-4 h-4" />
-                  <span>Carrinho</span>
-                </Button>
-
-                {user ? (
-                  <>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="flex items-center justify-center space-x-1"
-                      onClick={() => navigate('/perfil')}
-                    >
-                      <User className="w-4 h-4" />
-                      <span>Meu Perfil</span>
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="flex items-center justify-center space-x-1"
-                      onClick={handleSignOut}
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span>Sair</span>
-                    </Button>
-                  </>
-                ) : (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex items-center justify-center space-x-1"
-                    onClick={() => navigate('/auth')}
-                  >
-                    <User className="w-4 h-4" />
-                    <span>Login</span>
-                  </Button>
-                )}
-              </div>
-            </nav>
-          </div>
+                  <Settings className="w-4 h-4" />
+                  <span>Painel Admin</span>
+                </Link>
+              )}
+            </div>
+          </nav>
         )}
       </div>
     </header>
