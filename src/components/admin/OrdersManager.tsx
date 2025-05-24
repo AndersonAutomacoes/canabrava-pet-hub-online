@@ -18,10 +18,8 @@ interface Order {
   metodo_pagamento: string;
   status: string;
   observacoes?: string;
-  profiles?: {
-    nome: string;
-    email: string;
-  } | null;
+  customer_name?: string;
+  customer_email?: string;
 }
 
 export const OrdersManager = () => {
@@ -33,33 +31,40 @@ export const OrdersManager = () => {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // First get all orders
+      const { data: ordersData, error: ordersError } = await supabase
         .from('pedidos')
-        .select(`
-          id,
-          user_id,
-          created_at,
-          total,
-          endereco_entrega,
-          metodo_pagamento,
-          status,
-          observacoes,
-          profiles!left (
-            nome,
-            email
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (ordersError) throw ordersError;
+
+      // Then get profiles data separately and merge
+      const userIds = ordersData?.map(order => order.user_id).filter(Boolean) || [];
+      let profilesData: any[] = [];
       
-      // Transform the data to match our Order interface
-      const transformedData = (data || []).map(item => ({
-        ...item,
-        profiles: item.profiles && !Array.isArray(item.profiles) ? item.profiles : null
-      }));
+      if (userIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, nome, email')
+          .in('id', userIds);
+        
+        if (!profilesError) {
+          profilesData = profiles || [];
+        }
+      }
+
+      // Merge orders with profile data
+      const ordersWithProfiles = (ordersData || []).map(order => {
+        const profile = profilesData.find(p => p.id === order.user_id);
+        return {
+          ...order,
+          customer_name: profile?.nome || 'Cliente não encontrado',
+          customer_email: profile?.email || 'Email não disponível'
+        };
+      });
       
-      setOrders(transformedData);
+      setOrders(ordersWithProfiles);
     } catch (error) {
       console.error('Erro ao buscar pedidos:', error);
       toast({
@@ -77,8 +82,8 @@ export const OrdersManager = () => {
   }, []);
 
   const filteredOrders = orders.filter(order => {
-    const customerName = order.profiles?.nome?.toLowerCase() || '';
-    const customerEmail = order.profiles?.email?.toLowerCase() || '';
+    const customerName = order.customer_name?.toLowerCase() || '';
+    const customerEmail = order.customer_email?.toLowerCase() || '';
     const orderStatus = order.status.toLowerCase();
     const searchLower = searchTerm.toLowerCase();
     
@@ -146,10 +151,10 @@ export const OrdersManager = () => {
                     <TableCell>
                       <div>
                         <div className="font-medium text-slate-800">
-                          {order.profiles?.nome || 'Cliente não encontrado'}
+                          {order.customer_name}
                         </div>
                         <div className="text-sm text-slate-500">
-                          {order.profiles?.email || 'Email não disponível'}
+                          {order.customer_email}
                         </div>
                       </div>
                     </TableCell>
