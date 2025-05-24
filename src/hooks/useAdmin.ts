@@ -19,30 +19,14 @@ export const useAdmin = () => {
       try {
         console.log('Verificando status de admin para usuário:', user.id);
         
-        // Primeira tentativa: usar a função RPC is_admin
-        const { data: isAdminRpc, error: rpcError } = await supabase.rpc('is_admin');
+        const { data: isAdminResult, error } = await supabase.rpc('is_admin');
         
-        if (rpcError) {
-          console.error('Erro ao chamar RPC is_admin:', rpcError);
-          
-          // Fallback: consulta direta na tabela admin_users
-          const { data: adminData, error: directError } = await supabase
-            .from('admin_users')
-            .select('id')
-            .eq('user_id', user.id)
-            .maybeSingle();
-          
-          if (directError) {
-            console.error('Erro ao verificar admin diretamente:', directError);
-            setIsAdmin(false);
-          } else {
-            const adminStatus = !!adminData;
-            console.log('Status de admin (consulta direta):', adminStatus);
-            setIsAdmin(adminStatus);
-          }
+        if (error) {
+          console.error('Erro ao chamar RPC is_admin:', error);
+          setIsAdmin(false);
         } else {
-          console.log('Status de admin (RPC):', isAdminRpc);
-          setIsAdmin(isAdminRpc);
+          console.log('Status de admin (RPC):', isAdminResult);
+          setIsAdmin(isAdminResult);
         }
       } catch (error) {
         console.error('Erro ao verificar admin:', error);
