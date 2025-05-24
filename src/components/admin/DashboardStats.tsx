@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Package, Calendar, Users, DollarSign } from 'lucide-react';
@@ -29,7 +28,7 @@ export const DashboardStats = () => {
 
         // Buscar total de agendamentos
         const { count: appointmentsCount } = await supabase
-          .from('consultaagendamentopet')
+          .from('Agendamento')
           .select('*', { count: 'exact', head: true });
 
         // Buscar total de pedidos
