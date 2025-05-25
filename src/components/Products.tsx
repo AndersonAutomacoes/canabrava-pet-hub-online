@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,102 +8,96 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/hooks/useCart';
 import { useFavorites } from '@/hooks/useFavorites';
+import { supabase } from '@/integrations/supabase/client';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+
+interface Product {
+  id: string;
+  nome: string;
+  descricao: string;
+  preco: number;
+  categoria: string;
+  marca?: string;
+  estoque: number;
+  tipo_pet?: string;
+  imagens?: string[];
+  ativo: boolean;
+}
 
 const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { toggleFavorite, isFavorite } = useFavorites();
 
-  const categories = [
-    { id: 'all', name: 'Todos', icon: '🛍️' },
-    { id: 'food', name: 'Ração', icon: '🥘' },
-    { id: 'toys', name: 'Brinquedos', icon: '🎾' },
-    { id: 'accessories', name: 'Acessórios', icon: '🎽' },
-    { id: 'hygiene', name: 'Higiene', icon: '🧴' }
-  ];
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
-  const products = [
-    {
-      id: 1,
-      name: 'Ração Premium Royal Canin',
-      category: 'food',
-      price: 89.90,
-      originalPrice: 99.90,
-      image: '🥘',
-      rating: 4.8,
-      reviews: 124,
-      description: 'Ração premium para cães adultos de raças médias',
-      badge: 'Mais Vendido',
-      inStock: true
-    },
-    {
-      id: 2,
-      name: 'Bola de Tênis Kong',
-      category: 'toys',
-      price: 24.90,
-      image: '🎾',
-      rating: 4.7,
-      reviews: 89,
-      description: 'Bola resistente para exercícios e diversão',
-      badge: 'Novo',
-      inStock: true
-    },
-    {
-      id: 3,
-      name: 'Coleira Ajustável Premium',
-      category: 'accessories',
-      price: 34.90,
-      image: '🎽',
-      rating: 4.6,
-      reviews: 67,
-      description: 'Coleira confortável e resistente',
-      inStock: true
-    },
-    {
-      id: 4,
-      name: 'Shampoo Neutro Pet',
-      category: 'hygiene',
-      price: 19.90,
-      image: '🧴',
-      rating: 4.5,
-      reviews: 156,
-      description: 'Shampoo suave para todos os tipos de pelo',
-      inStock: true
-    },
-    {
-      id: 5,
-      name: 'Ração Cat Chow Gatos',
-      category: 'food',
-      price: 45.90,
-      originalPrice: 52.90,
-      image: '🐱',
-      rating: 4.7,
-      reviews: 93,
-      description: 'Ração balanceada para gatos adultos',
-      badge: 'Promoção',
-      inStock: true
-    },
-    {
-      id: 6,
-      name: 'Corda com Nós Resistente',
-      category: 'toys',
-      price: 16.90,
-      image: '🪢',
-      rating: 4.4,
-      reviews: 78,
-      description: 'Brinquedo de corda para mastigação',
-      inStock: false
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      console.log('Buscando produtos do banco de dados...');
+      
+      const { data, error } = await supabase
+        .from('produtos')
+        .select('*')
+        .eq('ativo', true)
+        .order('nome');
+
+      if (error) {
+        console.error('Erro ao buscar produtos:', error);
+        throw error;
+      }
+
+      console.log('Produtos carregados:', data);
+      setProducts(data || []);
+      
+      // Extrair categorias únicas dos produtos
+      const uniqueCategories = [...new Set(data?.map(p => p.categoria) || [])];
+      const categoryList = [
+        { id: 'all', name: 'Todos', icon: '🛍️' },
+        ...uniqueCategories.map(cat => ({
+          id: cat,
+          name: cat.charAt(0).toUpperCase() + cat.slice(1),
+          icon: getCategoryIcon(cat)
+        }))
+      ];
+      setCategories(categoryList);
+      
+    } catch (error) {
+      console.error('Erro ao carregar produtos:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os produtos.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const getCategoryIcon = (category: string) => {
+    const icons: Record<string, string> = {
+      'racao': '🥘',
+      'brinquedos': '🎾',
+      'acessorios': '🎽',
+      'higiene': '🧴',
+      'medicina': '💊'
+    };
+    return icons[category] || '🐾';
+  };
 
   const filteredProducts = selectedCategory === 'all' 
     ? products 
-    : products.filter(product => product.category === selectedCategory);
+    : products.filter(product => product.categoria === selectedCategory);
 
-  const handleAddToCart = async (product) => {
-    if (!product.inStock) {
+  const handleAddToCart = async (product: Product) => {
+    if (product.estoque <= 0) {
       toast({
         title: "Produto indisponível",
         description: "Este produto está temporariamente fora de estoque.",
@@ -112,17 +107,37 @@ const Products = () => {
     }
 
     console.log('Adicionando produto ao carrinho:', product.id);
-    await addToCart(product.id.toString(), 1);
+    await addToCart(product.id, 1);
   };
 
-  const handleToggleFavorite = async (product) => {
+  const handleToggleFavorite = async (product: Product) => {
     console.log('Adicionando/removendo produto dos favoritos:', product.id);
-    await toggleFavorite(product.id.toString());
+    await toggleFavorite(product.id);
   };
 
   const handleViewAllProducts = () => {
     navigate('/produtos');
   };
+
+  if (loading) {
+    return (
+      <section id="products" className="py-20 px-4 bg-gradient-to-b from-gray-50 to-white">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+              Produtos para seu Pet
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Carregando nossos produtos...
+            </p>
+          </div>
+          <div className="flex justify-center">
+            <LoadingSpinner />
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="products" className="py-20 px-4 bg-gradient-to-b from-gray-50 to-white">
@@ -162,21 +177,16 @@ const Products = () => {
           {filteredProducts.slice(0, 6).map((product) => (
             <Card key={product.id} className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg overflow-hidden">
               <CardHeader className="text-center pb-4 relative">
-                {product.badge && (
-                  <Badge 
-                    className={`absolute top-4 right-4 text-white font-semibold ${
-                      product.badge === 'Mais Vendido' ? 'bg-blue-600 hover:bg-blue-700' :
-                      product.badge === 'Novo' ? 'bg-green-600 hover:bg-green-700' :
-                      'bg-purple-600 hover:bg-purple-700'
-                    }`}
-                  >
-                    {product.badge}
-                  </Badge>
-                )}
-                <div className="text-6xl mb-4">{product.image}</div>
-                <CardTitle className="text-lg mb-2 text-gray-800">{product.name}</CardTitle>
+                <div className="text-6xl mb-4">
+                  {product.imagens && product.imagens[0] ? (
+                    <img src={product.imagens[0]} alt={product.nome} className="w-16 h-16 mx-auto object-cover rounded" />
+                  ) : (
+                    getCategoryIcon(product.categoria)
+                  )}
+                </div>
+                <CardTitle className="text-lg mb-2 text-gray-800">{product.nome}</CardTitle>
                 <CardDescription className="text-gray-600">
-                  {product.description}
+                  {product.descricao}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -184,61 +194,48 @@ const Products = () => {
                   <div className="space-y-1">
                     <div className="flex items-center space-x-2">
                       <span className="text-2xl font-bold text-green-600">
-                        R$ {product.price.toFixed(2)}
+                        R$ {product.preco.toFixed(2)}
                       </span>
-                      {product.originalPrice && (
-                        <span className="text-sm text-gray-500 line-through">
-                          R$ {product.originalPrice.toFixed(2)}
-                        </span>
+                      {product.marca && (
+                        <span className="text-sm text-gray-500">{product.marca}</span>
                       )}
                     </div>
-                    {product.originalPrice && (
-                      <div className="text-sm text-green-600 font-semibold">
-                        {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
-                      </div>
-                    )}
                   </div>
                   <div className="text-right">
-                    <div className="flex items-center space-x-1">
-                      <Star className="w-4 h-4 fill-teal-400 text-teal-400" />
-                      <span className="text-sm font-semibold text-gray-700">{product.rating}</span>
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      ({product.reviews} avaliações)
-                    </div>
+                    <Badge variant="outline">{product.categoria}</Badge>
                   </div>
                 </div>
                 
                 <div className={`text-sm font-semibold ${
-                  product.inStock ? 'text-green-600' : 'text-red-500'
+                  product.estoque > 0 ? 'text-green-600' : 'text-red-500'
                 }`}>
-                  {product.inStock ? '✓ Em estoque' : '✗ Fora de estoque'}
+                  {product.estoque > 0 ? `✓ ${product.estoque} em estoque` : '✗ Fora de estoque'}
                 </div>
               </CardContent>
               <CardFooter className="space-y-3">
                 <div className="flex w-full space-x-2">
                   <Button 
                     className={`flex-1 ${
-                      product.inStock 
+                      product.estoque > 0 
                         ? 'bg-green-600 hover:bg-green-700 text-white' 
                         : 'bg-gray-400 cursor-not-allowed text-white'
                     }`}
                     onClick={() => handleAddToCart(product)}
-                    disabled={!product.inStock}
+                    disabled={product.estoque <= 0}
                   >
                     <ShoppingCart className="w-4 h-4 mr-2" />
-                    {product.inStock ? 'Adicionar' : 'Indisponível'}
+                    {product.estoque > 0 ? 'Adicionar' : 'Indisponível'}
                   </Button>
                   <Button
                     variant="outline"
                     size="icon"
                     onClick={() => handleToggleFavorite(product)}
                     className={`hover:text-red-500 border-gray-300 ${
-                      isFavorite(product.id.toString()) ? 'text-red-500 bg-red-50' : ''
+                      isFavorite(product.id) ? 'text-red-500 bg-red-50' : ''
                     }`}
                   >
                     <Heart className={`w-4 h-4 ${
-                      isFavorite(product.id.toString()) ? 'fill-current' : ''
+                      isFavorite(product.id) ? 'fill-current' : ''
                     }`} />
                   </Button>
                 </div>
@@ -248,14 +245,16 @@ const Products = () => {
         </div>
 
         {/* View All Products Button */}
-        <div className="text-center mb-12">
-          <Button 
-            onClick={handleViewAllProducts}
-            className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
-          >
-            Ver Todos os Produtos
-          </Button>
-        </div>
+        {products.length > 6 && (
+          <div className="text-center mb-12">
+            <Button 
+              onClick={handleViewAllProducts}
+              className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
+            >
+              Ver Todos os Produtos ({products.length})
+            </Button>
+          </div>
+        )}
 
         {/* Features */}
         <div className="grid md:grid-cols-3 gap-6 mt-12">

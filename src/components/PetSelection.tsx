@@ -5,16 +5,32 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, PawPrint } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Plus, PawPrint, Calendar, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { formatDateTime } from '@/utils/dateFormatters';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface Pet {
   cdPet: number;
   nmPet: string;
   nmRaca?: string;
   dsPorte?: string;
+  nuIdade?: number;
+  dtNascimento?: string;
+}
+
+interface Agendamento {
+  cdAgendamento: number;
+  dtStart: string;
+  dtEnd: string;
+  flComparecimento: boolean;
+  servico?: {
+    dsservico: string;
+    vrservico: number;
+  };
 }
 
 interface Cliente {
@@ -30,8 +46,10 @@ interface PetSelectionProps {
 const PetSelection: React.FC<PetSelectionProps> = ({ selectedPet, onPetSelect }) => {
   const [pets, setPets] = useState<Pet[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [agendamentos, setAgendamentos] = useState<Record<number, Agendamento[]>>({});
   const [loading, setLoading] = useState(true);
   const [showAddPet, setShowAddPet] = useState(false);
+  const [showHistory, setShowHistory] = useState<number | null>(null);
   const [newPet, setNewPet] = useState({
     nmPet: '',
     nmRaca: '',
@@ -64,8 +82,6 @@ const PetSelection: React.FC<PetSelectionProps> = ({ selectedPet, onPetSelect })
         .select('cdCliente, dsNome')
         .order('cdCliente');
 
-      console.log('Resultado da busca de clientes:', { data, error });
-
       if (error) {
         console.error('Erro ao buscar clientes:', error);
         return;
@@ -85,8 +101,6 @@ const PetSelection: React.FC<PetSelectionProps> = ({ selectedPet, onPetSelect })
         .from('Pet')
         .select('*')
         .order('nmPet');
-
-      console.log('Resultado da busca de pets:', { data, error });
 
       if (error) {
         console.error('Erro ao buscar pets:', error);
@@ -109,9 +123,42 @@ const PetSelection: React.FC<PetSelectionProps> = ({ selectedPet, onPetSelect })
     }
   };
 
+  const fetchPetHistory = async (petId: number) => {
+    try {
+      console.log('Buscando histórico do pet:', petId);
+      
+      const { data, error } = await supabase
+        .from('Agendamento')
+        .select(`
+          cdAgendamento,
+          dtStart,
+          dtEnd,
+          flComparecimento,
+          servico:cdServico (
+            dsservico,
+            vrservico
+          )
+        `)
+        .eq('cdPet', petId)
+        .order('dtStart', { ascending: false });
+
+      if (error) {
+        console.error('Erro ao buscar histórico:', error);
+        return;
+      }
+      
+      setAgendamentos(prev => ({
+        ...prev,
+        [petId]: data || []
+      }));
+      
+    } catch (error) {
+      console.error('Erro inesperado ao buscar histórico:', error);
+    }
+  };
+
   const ensureClientExists = async () => {
     if (clientes.length === 0) {
-      // Criar um cliente padrão se não existir nenhum
       try {
         console.log('Criando cliente padrão...');
         
@@ -124,8 +171,6 @@ const PetSelection: React.FC<PetSelectionProps> = ({ selectedPet, onPetSelect })
           })
           .select()
           .single();
-
-        console.log('Resultado da criação do cliente:', { data, error });
 
         if (error) {
           throw error;
@@ -160,7 +205,6 @@ const PetSelection: React.FC<PetSelectionProps> = ({ selectedPet, onPetSelect })
     try {
       console.log('Adicionando novo pet:', newPet);
       
-      // Garantir que existe um cliente válido
       const cdCliente = await ensureClientExists();
       if (!cdCliente) {
         toast({
@@ -178,15 +222,11 @@ const PetSelection: React.FC<PetSelectionProps> = ({ selectedPet, onPetSelect })
         dsPorte: newPet.dsPorte
       };
 
-      console.log('Dados do pet para inserção:', petData);
-
       const { data, error } = await supabase
         .from('Pet')
         .insert(petData)
         .select()
         .single();
-
-      console.log('Resultado da inserção do pet:', { data, error });
 
       if (error) {
         console.error('Erro ao adicionar pet:', error);
@@ -207,7 +247,6 @@ const PetSelection: React.FC<PetSelectionProps> = ({ selectedPet, onPetSelect })
         description: `${data.nmPet} foi adicionado com sucesso.`,
       });
 
-      // Selecionar automaticamente o pet recém-criado
       onPetSelect(data.cdPet.toString());
     } catch (error) {
       console.error('Erro inesperado ao adicionar pet:', error);
@@ -219,11 +258,31 @@ const PetSelection: React.FC<PetSelectionProps> = ({ selectedPet, onPetSelect })
     }
   };
 
+  const handleShowHistory = async (petId: number) => {
+    if (!agendamentos[petId]) {
+      await fetchPetHistory(petId);
+    }
+    setShowHistory(petId);
+  };
+
+  const getStatusBadge = (agendamento: Agendamento) => {
+    const now = new Date();
+    const startDate = new Date(agendamento.dtStart);
+    
+    if (agendamento.flComparecimento) {
+      return <Badge className="bg-green-600"><CheckCircle className="w-3 h-3 mr-1" />Realizado</Badge>;
+    } else if (startDate > now) {
+      return <Badge variant="secondary"><Calendar className="w-3 h-3 mr-1" />Agendado</Badge>;
+    } else {
+      return <Badge variant="destructive"><AlertCircle className="w-3 h-3 mr-1" />Não Compareceu</Badge>;
+    }
+  };
+
   if (loading) {
     return (
       <Card>
         <CardContent className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+          <LoadingSpinner />
         </CardContent>
       </Card>
     );
@@ -318,19 +377,33 @@ const PetSelection: React.FC<PetSelectionProps> = ({ selectedPet, onPetSelect })
                   onClick={() => onPetSelect(pet.cdPet.toString())}
                 >
                   <CardContent className="p-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                        <PawPrint className="w-6 h-6 text-green-600" />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                          <PawPrint className="w-6 h-6 text-green-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold">{pet.nmPet}</h4>
+                          {pet.nmRaca && (
+                            <p className="text-sm text-gray-600">{pet.nmRaca}</p>
+                          )}
+                          <p className="text-xs text-gray-500">
+                            Porte {pet.dsPorte?.toLowerCase()}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-semibold">{pet.nmPet}</h4>
-                        {pet.nmRaca && (
-                          <p className="text-sm text-gray-600">{pet.nmRaca}</p>
-                        )}
-                        <p className="text-xs text-gray-500">
-                          Porte {pet.dsPorte?.toLowerCase()}
-                        </p>
-                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShowHistory(pet.cdPet);
+                        }}
+                        className="text-blue-600 hover:text-blue-700"
+                      >
+                        <Clock className="w-4 h-4 mr-1" />
+                        Histórico
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -395,6 +468,54 @@ const PetSelection: React.FC<PetSelectionProps> = ({ selectedPet, onPetSelect })
                       Adicionar
                     </Button>
                   </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Modal de Histórico */}
+            <Dialog open={showHistory !== null} onOpenChange={() => setShowHistory(null)}>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>
+                    Histórico - {pets.find(p => p.cdPet === showHistory)?.nmPet}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="max-h-96 overflow-y-auto">
+                  {showHistory && agendamentos[showHistory] ? (
+                    agendamentos[showHistory].length > 0 ? (
+                      <div className="space-y-4">
+                        {agendamentos[showHistory].map((agendamento) => (
+                          <div key={agendamento.cdAgendamento} className="border rounded-lg p-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <h4 className="font-semibold">
+                                  {agendamento.servico?.dsservico || 'Serviço'}
+                                </h4>
+                                <p className="text-sm text-gray-600">
+                                  {formatDateTime(agendamento.dtStart)}
+                                </p>
+                              </div>
+                              {getStatusBadge(agendamento)}
+                            </div>
+                            {agendamento.servico?.vrservico && (
+                              <p className="text-sm text-green-600 font-semibold">
+                                R$ {agendamento.servico.vrservico.toFixed(2)}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Calendar className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                        <p className="text-gray-600">Nenhum histórico encontrado</p>
+                      </div>
+                    )
+                  ) : (
+                    <div className="flex justify-center py-8">
+                      <LoadingSpinner />
+                    </div>
+                  )}
                 </div>
               </DialogContent>
             </Dialog>

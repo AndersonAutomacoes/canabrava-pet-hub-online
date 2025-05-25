@@ -1,102 +1,133 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, Eye, ArrowRight, Heart } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { useToast } from '@/hooks/use-toast';
+
+interface BlogPost {
+  id: string;
+  titulo: string;
+  conteudo: string;
+  resumo?: string;
+  imagem_url?: string;
+  categoria?: string;
+  autor?: string;
+  slug: string;
+  tags?: string[];
+  publicado: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 const Blog = () => {
-  const blogPosts = [
-    {
-      id: 1,
-      title: 'Como Cuidar da Higiene do seu Pet no Inverno',
-      excerpt: 'Dicas essenciais para manter seu pet limpo e saudável durante os meses mais frios do ano.',
-      content: 'O inverno requer cuidados especiais com a higiene dos pets. Banhos menos frequentes, secagem completa e produtos específicos são fundamentais...',
-      category: 'Cuidados',
-      author: 'Dr. Carlos Silva',
-      date: '2024-01-15',
-      readTime: '5 min',
-      views: 234,
-      image: '🧼',
-      tags: ['higiene', 'inverno', 'cuidados'],
-      featured: true
-    },
-    {
-      id: 2,
-      title: 'Os Melhores Brinquedos para Estimular seu Cão',
-      excerpt: 'Descubra quais brinquedos são ideais para o desenvolvimento mental e físico do seu cão.',
-      content: 'Brinquedos interativos, cordas e bolas podem fazer toda a diferença no bem-estar do seu pet...',
-      category: 'Diversão',
-      author: 'Maria Santos',
-      date: '2024-01-12',
-      readTime: '3 min',
-      views: 189,
-      image: '🎾',
-      tags: ['brinquedos', 'exercícios', 'diversão']
-    },
-    {
-      id: 3,
-      title: 'Alimentação Balanceada: Guia Completo',
-      excerpt: 'Tudo que você precisa saber sobre nutrição adequada para cães e gatos.',
-      content: 'Uma alimentação equilibrada é fundamental para a saúde e longevidade do seu pet...',
-      category: 'Nutrição',
-      author: 'Dr. Carlos Silva',
-      date: '2024-01-10',
-      readTime: '7 min',
-      views: 312,
-      image: '🥘',
-      tags: ['nutrição', 'saúde', 'alimentação']
-    },
-    {
-      id: 4,
-      title: 'Sinais de que seu Pet Precisa de Tosa',
-      excerpt: 'Aprenda a identificar quando é hora de levar seu pet para uma tosa profissional.',
-      content: 'Pelos emaranhados, coceira excessiva e dificuldade de movimentação são alguns sinais...',
-      category: 'Beleza',
-      author: 'João Oliveira',
-      date: '2024-01-08',
-      readTime: '4 min',
-      views: 156,
-      image: '✂️',
-      tags: ['tosa', 'beleza', 'cuidados']
-    },
-    {
-      id: 5,
-      title: 'Como Preparar seu Pet para o Primeiro Banho',
-      excerpt: 'Dicas para tornar a experiência do primeiro banho mais tranquila para filhotes.',
-      content: 'O primeiro banho pode ser traumático se não for feito com cuidado e paciência...',
-      category: 'Cuidados',
-      author: 'Maria Santos',
-      date: '2024-01-05',
-      readTime: '6 min',
-      views: 278,
-      image: '🛁',
-      tags: ['banho', 'filhotes', 'cuidados']
-    },
-    {
-      id: 6,
-      title: 'Vacinação: Cronograma e Importância',
-      excerpt: 'Entenda a importância das vacinas e como manter o cronograma em dia.',
-      content: 'As vacinas são essenciais para prevenir doenças graves e manter a saúde do seu pet...',
-      category: 'Saúde',
-      author: 'Dr. Carlos Silva',
-      date: '2024-01-03',
-      readTime: '8 min',
-      views: 421,
-      image: '💉',
-      tags: ['vacinação', 'saúde', 'prevenção']
-    }
-  ];
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('Todos');
+  const { toast } = useToast();
 
-  const categories = ['Todos', 'Cuidados', 'Saúde', 'Nutrição', 'Diversão', 'Beleza'];
-  const [selectedCategory, setSelectedCategory] = React.useState('Todos');
+  useEffect(() => {
+    fetchBlogPosts();
+  }, []);
+
+  const fetchBlogPosts = async () => {
+    try {
+      setLoading(true);
+      console.log('Buscando posts do blog...');
+      
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('*')
+        .eq('publicado', true)
+        .order('created_at', { ascending: false })
+        .limit(6);
+
+      if (error) {
+        console.error('Erro ao buscar posts:', error);
+        throw error;
+      }
+
+      console.log('Posts carregados:', data);
+      setBlogPosts(data || []);
+      
+      // Extrair categorias únicas
+      const uniqueCategories = [...new Set(data?.map(p => p.categoria).filter(Boolean) || [])];
+      setCategories(['Todos', ...uniqueCategories]);
+      
+    } catch (error) {
+      console.error('Erro ao carregar posts:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os posts do blog.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredPosts = selectedCategory === 'Todos' 
     ? blogPosts 
-    : blogPosts.filter(post => post.category === selectedCategory);
+    : blogPosts.filter(post => post.categoria === selectedCategory);
 
-  const featuredPost = blogPosts.find(post => post.featured);
-  const regularPosts = blogPosts.filter(post => !post.featured);
+  const featuredPost = filteredPosts[0];
+  const regularPosts = filteredPosts.slice(1);
+
+  const getCategoryIcon = (categoria?: string) => {
+    const icons: Record<string, string> = {
+      'Cuidados': '🧼',
+      'Saúde': '💉',
+      'Nutrição': '🥘',
+      'Diversão': '🎾',
+      'Beleza': '✂️'
+    };
+    return icons[categoria || ''] || '📝';
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  if (loading) {
+    return (
+      <section id="blog" className="py-20 px-4 bg-gradient-to-b from-gray-50 to-white">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+              Blog & Dicas
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Carregando conteúdo...
+            </p>
+          </div>
+          <div className="flex justify-center">
+            <LoadingSpinner />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (blogPosts.length === 0) {
+    return (
+      <section id="blog" className="py-20 px-4 bg-gradient-to-b from-gray-50 to-white">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+              Blog & Dicas
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Em breve teremos conteúdo exclusivo para você e seu pet!
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="blog" className="py-20 px-4 bg-gradient-to-b from-gray-50 to-white">
@@ -141,29 +172,28 @@ const Blog = () => {
                     <Badge variant="secondary" className="bg-white text-green-600">
                       Destaque
                     </Badge>
-                    <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-                      {featuredPost.category}
-                    </Badge>
+                    {featuredPost.categoria && (
+                      <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                        {featuredPost.categoria}
+                      </Badge>
+                    )}
                   </div>
                   <CardTitle className="text-3xl md:text-4xl font-bold mb-4 leading-tight">
-                    {featuredPost.title}
+                    {featuredPost.titulo}
                   </CardTitle>
                   <CardDescription className="text-lg text-white/90 mb-6">
-                    {featuredPost.excerpt}
+                    {featuredPost.resumo || featuredPost.conteudo.substring(0, 150) + '...'}
                   </CardDescription>
                   <div className="flex items-center space-x-6 text-sm text-white/80 mb-6">
                     <div className="flex items-center space-x-1">
                       <Calendar className="w-4 h-4" />
-                      <span>{new Date(featuredPost.date).toLocaleDateString('pt-BR')}</span>
+                      <span>{formatDate(featuredPost.created_at)}</span>
                     </div>
-                    <div className="flex items-center space-x-1">
-                      <Clock className="w-4 h-4" />
-                      <span>{featuredPost.readTime}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Eye className="w-4 h-4" />
-                      <span>{featuredPost.views} visualizações</span>
-                    </div>
+                    {featuredPost.autor && (
+                      <div className="flex items-center space-x-1">
+                        <span>Por {featuredPost.autor}</span>
+                      </div>
+                    )}
                   </div>
                   <Button variant="secondary" size="lg" className="bg-white text-green-600 hover:bg-gray-100">
                     Ler Artigo Completo
@@ -172,7 +202,7 @@ const Blog = () => {
                 </CardHeader>
                 <div className="lg:p-12 p-8 flex items-center justify-center">
                   <div className="text-9xl opacity-20">
-                    {featuredPost.image}
+                    {getCategoryIcon(featuredPost.categoria)}
                   </div>
                 </div>
               </div>
@@ -182,45 +212,37 @@ const Blog = () => {
 
         {/* Blog Posts Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredPosts.slice(selectedCategory === 'Todos' ? 1 : 0).map((post) => (
+          {regularPosts.map((post) => (
             <Card key={post.id} className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg overflow-hidden">
               <CardHeader className="text-center pb-4">
                 <div className="flex justify-between items-start mb-4">
-                  <Badge variant="outline" className="text-green-600 border-green-600">
-                    {post.category}
-                  </Badge>
-                  <div className="text-4xl">{post.image}</div>
+                  {post.categoria && (
+                    <Badge variant="outline" className="text-green-600 border-green-600">
+                      {post.categoria}
+                    </Badge>
+                  )}
+                  <div className="text-4xl">{getCategoryIcon(post.categoria)}</div>
                 </div>
                 <CardTitle className="text-xl mb-2 text-left group-hover:text-green-600 transition-colors">
-                  {post.title}
+                  {post.titulo}
                 </CardTitle>
                 <CardDescription className="text-gray-600 text-left">
-                  {post.excerpt}
+                  {post.resumo || post.conteudo.substring(0, 100) + '...'}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex flex-wrap gap-2">
-                  {post.tags.map((tag, tagIndex) => (
-                    <Badge key={tagIndex} variant="secondary" className="text-xs">
-                      #{tag}
-                    </Badge>
-                  ))}
-                </div>
-                <div className="flex items-center justify-between text-sm text-gray-500">
-                  <span>Por {post.author}</span>
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-1">
-                      <Clock className="w-3 h-3" />
-                      <span>{post.readTime}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Eye className="w-3 h-3" />
-                      <span>{post.views}</span>
-                    </div>
+                {post.tags && post.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {post.tags.slice(0, 3).map((tag, tagIndex) => (
+                      <Badge key={tagIndex} variant="secondary" className="text-xs">
+                        #{tag}
+                      </Badge>
+                    ))}
                   </div>
-                </div>
-                <div className="text-sm text-gray-500">
-                  {new Date(post.date).toLocaleDateString('pt-BR')}
+                )}
+                <div className="flex items-center justify-between text-sm text-gray-500">
+                  {post.autor && <span>Por {post.autor}</span>}
+                  <span>{formatDate(post.created_at)}</span>
                 </div>
               </CardContent>
               <CardFooter className="pt-0">
