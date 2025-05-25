@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,10 +28,8 @@ interface Agendamento {
   dtStart: string;
   dtEnd: string;
   flComparecimento: boolean;
-  servico?: {
-    dsservico: string;
-    vrservico: number;
-  };
+  dsServico?: string;
+  vrServico?: number;
 }
 
 interface Cliente {
@@ -127,29 +126,40 @@ const PetSelection: React.FC<PetSelectionProps> = ({ selectedPet, onPetSelect })
     try {
       console.log('Buscando histórico do pet:', petId);
       
-      const { data, error } = await supabase
+      // Buscar agendamentos
+      const { data: agendamentosData, error: agendamentosError } = await supabase
         .from('Agendamento')
-        .select(`
-          cdAgendamento,
-          dtStart,
-          dtEnd,
-          flComparecimento,
-          servico:cdServico (
-            dsservico,
-            vrservico
-          )
-        `)
+        .select('cdAgendamento, dtStart, dtEnd, flComparecimento, cdServico')
         .eq('cdPet', petId)
         .order('dtStart', { ascending: false });
 
-      if (error) {
-        console.error('Erro ao buscar histórico:', error);
+      if (agendamentosError) {
+        console.error('Erro ao buscar agendamentos:', agendamentosError);
         return;
       }
+
+      // Buscar serviços separadamente
+      const { data: servicosData } = await supabase
+        .from('servico')
+        .select('cdservico, dsservico, vrservico');
+
+      // Mapear dados manualmente
+      const mappedAgendamentos: Agendamento[] = (agendamentosData || []).map(agendamento => {
+        const servico = servicosData?.find(s => s.cdservico === agendamento.cdServico);
+        
+        return {
+          cdAgendamento: agendamento.cdAgendamento,
+          dtStart: agendamento.dtStart,
+          dtEnd: agendamento.dtEnd,
+          flComparecimento: agendamento.flComparecimento,
+          dsServico: servico?.dsservico,
+          vrServico: servico?.vrservico
+        };
+      });
       
       setAgendamentos(prev => ({
         ...prev,
-        [petId]: data || []
+        [petId]: mappedAgendamentos
       }));
       
     } catch (error) {
@@ -489,7 +499,7 @@ const PetSelection: React.FC<PetSelectionProps> = ({ selectedPet, onPetSelect })
                             <div className="flex justify-between items-start mb-2">
                               <div>
                                 <h4 className="font-semibold">
-                                  {agendamento.servico?.dsservico || 'Serviço'}
+                                  {agendamento.dsServico || 'Serviço'}
                                 </h4>
                                 <p className="text-sm text-gray-600">
                                   {formatDateTime(agendamento.dtStart)}
@@ -497,9 +507,9 @@ const PetSelection: React.FC<PetSelectionProps> = ({ selectedPet, onPetSelect })
                               </div>
                               {getStatusBadge(agendamento)}
                             </div>
-                            {agendamento.servico?.vrservico && (
+                            {agendamento.vrServico && (
                               <p className="text-sm text-green-600 font-semibold">
-                                R$ {agendamento.servico.vrservico.toFixed(2)}
+                                R$ {agendamento.vrServico.toFixed(2)}
                               </p>
                             )}
                           </div>
