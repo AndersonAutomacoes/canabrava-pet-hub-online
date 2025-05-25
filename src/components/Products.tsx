@@ -6,12 +6,14 @@ import { ShoppingCart, Star, Filter, Heart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/hooks/useCart';
+import { useFavorites } from '@/hooks/useFavorites';
 
 const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const { toast } = useToast();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { toggleFavorite, isFavorite } = useFavorites();
 
   const categories = [
     { id: 'all', name: 'Todos', icon: '🛍️' },
@@ -109,12 +111,13 @@ const Products = () => {
       return;
     }
 
-    // Para esta demonstração, vamos apenas mostrar o toast
-    // Em um ambiente real, usaríamos o hook useCart
-    toast({
-      title: "Produto adicionado!",
-      description: `${product.name} foi adicionado ao carrinho.`,
-    });
+    console.log('Adicionando produto ao carrinho:', product.id);
+    await addToCart(product.id.toString(), 1);
+  };
+
+  const handleToggleFavorite = async (product) => {
+    console.log('Adicionando/removendo produto dos favoritos:', product.id);
+    await toggleFavorite(product.id.toString());
   };
 
   const handleViewAllProducts = () => {
@@ -226,8 +229,17 @@ const Products = () => {
                     <ShoppingCart className="w-4 h-4 mr-2" />
                     {product.inStock ? 'Adicionar' : 'Indisponível'}
                   </Button>
-                  <Button variant="outline" size="icon" className="hover:text-red-500 border-gray-300">
-                    <Heart className="w-4 h-4" />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleToggleFavorite(product)}
+                    className={`hover:text-red-500 border-gray-300 ${
+                      isFavorite(product.id.toString()) ? 'text-red-500 bg-red-50' : ''
+                    }`}
+                  >
+                    <Heart className={`w-4 h-4 ${
+                      isFavorite(product.id.toString()) ? 'fill-current' : ''
+                    }`} />
                   </Button>
                 </div>
               </CardFooter>
