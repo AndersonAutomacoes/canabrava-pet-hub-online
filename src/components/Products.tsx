@@ -1,15 +1,17 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, Star, Filter, Heart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
+import { useCart } from '@/hooks/useCart';
 
 const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [cart, setCart] = useState([]);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
 
   const categories = [
     { id: 'all', name: 'Todos', icon: '🛍️' },
@@ -97,7 +99,7 @@ const Products = () => {
     ? products 
     : products.filter(product => product.category === selectedCategory);
 
-  const addToCart = (product) => {
+  const handleAddToCart = async (product) => {
     if (!product.inStock) {
       toast({
         title: "Produto indisponível",
@@ -107,11 +109,16 @@ const Products = () => {
       return;
     }
 
-    setCart([...cart, product]);
+    // Para esta demonstração, vamos apenas mostrar o toast
+    // Em um ambiente real, usaríamos o hook useCart
     toast({
       title: "Produto adicionado!",
       description: `${product.name} foi adicionado ao carrinho.`,
     });
+  };
+
+  const handleViewAllProducts = () => {
+    navigate('/produtos');
   };
 
   return (
@@ -149,7 +156,7 @@ const Products = () => {
 
         {/* Products Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-          {filteredProducts.map((product) => (
+          {filteredProducts.slice(0, 6).map((product) => (
             <Card key={product.id} className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg overflow-hidden">
               <CardHeader className="text-center pb-4 relative">
                 {product.badge && (
@@ -213,7 +220,7 @@ const Products = () => {
                         ? 'bg-green-600 hover:bg-green-700 text-white' 
                         : 'bg-gray-400 cursor-not-allowed text-white'
                     }`}
-                    onClick={() => addToCart(product)}
+                    onClick={() => handleAddToCart(product)}
                     disabled={!product.inStock}
                   >
                     <ShoppingCart className="w-4 h-4 mr-2" />
@@ -228,20 +235,15 @@ const Products = () => {
           ))}
         </div>
 
-        {/* Shopping cart info */}
-        {cart.length > 0 && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-            <h3 className="text-lg font-semibold text-green-800 mb-2">
-              Carrinho ({cart.length} {cart.length === 1 ? 'item' : 'itens'})
-            </h3>
-            <p className="text-green-700 mb-4">
-              Total: R$ {cart.reduce((total, item) => total + item.price, 0).toFixed(2)}
-            </p>
-            <Button className="bg-green-600 hover:bg-green-700 text-white">
-              Finalizar Compra
-            </Button>
-          </div>
-        )}
+        {/* View All Products Button */}
+        <div className="text-center mb-12">
+          <Button 
+            onClick={handleViewAllProducts}
+            className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
+          >
+            Ver Todos os Produtos
+          </Button>
+        </div>
 
         {/* Features */}
         <div className="grid md:grid-cols-3 gap-6 mt-12">

@@ -8,12 +8,27 @@ import { useNavigate } from 'react-router-dom';
 export const QuickActions = () => {
   const navigate = useNavigate();
 
+  const scrollToServices = () => {
+    const servicesSection = document.getElementById('services');
+    if (servicesSection) {
+      servicesSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const actions = [
     {
       icon: Calendar,
       label: 'Agendar Serviço',
       description: 'Banho, tosa, consulta veterinária',
-      onClick: () => navigate('/agendamento'),
+      onClick: () => {
+        // Primeiro tenta navegar para a página de agendamento
+        // Se estiver na home, faz scroll para os serviços
+        if (window.location.pathname === '/') {
+          scrollToServices();
+        } else {
+          navigate('/agendamento');
+        }
+      },
       colorClass: 'bg-green-500 hover:bg-green-600',
       bgClass: 'hover:bg-green-50'
     },

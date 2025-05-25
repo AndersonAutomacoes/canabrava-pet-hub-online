@@ -2,8 +2,26 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar, ShoppingCart, Heart } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Hero = () => {
+  const navigate = useNavigate();
+
+  const handleScheduleService = () => {
+    navigate('/agendamento');
+  };
+
+  const handleViewProducts = () => {
+    navigate('/produtos');
+  };
+
+  const scrollToServices = () => {
+    const servicesSection = document.getElementById('services');
+    if (servicesSection) {
+      servicesSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <section id="home" className="relative py-20 px-4 overflow-hidden">
       <div className="container mx-auto">
@@ -39,11 +57,20 @@ const Hero = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="bg-green-600 hover:bg-green-700 text-white flex items-center space-x-2">
+              <Button 
+                size="lg" 
+                className="bg-green-600 hover:bg-green-700 text-white flex items-center space-x-2"
+                onClick={handleScheduleService}
+              >
                 <Calendar className="w-5 h-5" />
                 <span>Agendar Serviço</span>
               </Button>
-              <Button size="lg" variant="outline" className="border-orange-500 text-orange-500 hover:bg-orange-50 flex items-center space-x-2">
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="border-orange-500 text-orange-500 hover:bg-orange-50 flex items-center space-x-2"
+                onClick={handleViewProducts}
+              >
                 <ShoppingCart className="w-5 h-5" />
                 <span>Ver Produtos</span>
               </Button>
@@ -86,8 +113,12 @@ const Hero = () => {
                       <span className="text-blue-600 font-semibold">15/01/2025</span>
                     </div>
                   </div>
-                  <Button size="sm" className="w-full bg-green-600 hover:bg-green-700">
-                    Ver Histórico
+                  <Button 
+                    size="sm" 
+                    className="w-full bg-green-600 hover:bg-green-700"
+                    onClick={scrollToServices}
+                  >
+                    Ver Serviços
                   </Button>
                 </div>
               </div>
