@@ -20,6 +20,7 @@ interface Appointment {
   flComparecimento: boolean;
   dsServico?: string;
   nmPet?: string;
+  dsNomeCliente?: string;
   nuTelefoneWhatsapp?: string;
   cdServico?: number;
   cdPet?: number;
@@ -124,44 +125,61 @@ export const AppointmentsManager = () => {
 
   const fetchAppointments = async () => {
     try {
-      console.log('Buscando agendamentos com joins...');
+      console.log('Buscando agendamentos...');
       
-      const { data, error } = await supabase
+      // Buscar agendamentos primeiro
+      const { data: appointmentsData, error: appointmentsError } = await supabase
         .from('Agendamento')
-        .select(`
-          *,
-          servico!inner(dsservico),
-          Pet!inner(nmPet),
-          Clientes!inner(dsNome, nuTelefoneWhatsapp)
-        `)
+        .select('*')
         .order('dtStart', { ascending: false });
 
-      console.log('Resultado da busca de agendamentos:', { data, error });
-
-      if (error) {
-        console.error('Erro ao buscar agendamentos:', error);
+      if (appointmentsError) {
+        console.error('Erro ao buscar agendamentos:', appointmentsError);
         toast({
           title: "Erro",
-          description: `Erro ao carregar agendamentos: ${error.message}`,
+          description: `Erro ao carregar agendamentos: ${appointmentsError.message}`,
           variant: "destructive",
         });
         return;
       }
-      
-      // Mapear os dados para o formato esperado
-      const mappedAppointments = (data || []).map(appointment => ({
-        cdAgendamento: appointment.cdAgendamento,
-        dtStart: appointment.dtStart,
-        cdCliente: appointment.cdCliente,
-        flComparecimento: appointment.flComparecimento,
-        cdServico: appointment.cdServico,
-        cdPet: appointment.cdPet,
-        dsServico: appointment.servico?.dsservico,
-        nmPet: appointment.Pet?.nmPet,
-        nuTelefoneWhatsapp: appointment.Clientes?.nuTelefoneWhatsapp
-      }));
+
+      // Buscar serviços separadamente
+      const { data: servicesData, error: servicesError } = await supabase
+        .from('servico')
+        .select('cdservico, dsservico');
+
+      // Buscar clientes separadamente
+      const { data: clientesData, error: clientesError } = await supabase
+        .from('Clientes')
+        .select('cdCliente, dsNome, nuTelefoneWhatsapp');
+
+      // Buscar pets separadamente
+      const { data: petsData, error: petsError } = await supabase
+        .from('Pet')
+        .select('cdPet, nmPet, cdCliente');
+
+      // Mapear os dados manualmente
+      const mappedAppointments = (appointmentsData || []).map(appointment => {
+        const service = servicesData?.find(s => s.cdservico === appointment.cdServico);
+        const cliente = clientesData?.find(c => c.cdCliente === appointment.cdCliente);
+        const pet = petsData?.find(p => p.cdPet === appointment.cdPet);
+
+        return {
+          cdAgendamento: appointment.cdAgendamento,
+          dtStart: appointment.dtStart,
+          cdCliente: appointment.cdCliente,
+          flComparecimento: appointment.flComparecimento,
+          cdServico: appointment.cdServico,
+          cdPet: appointment.cdPet,
+          dsServico: service?.dsservico,
+          nmPet: pet?.nmPet,
+          dsNomeCliente: cliente?.dsNome,
+          nuTelefoneWhatsapp: cliente?.nuTelefoneWhatsapp
+        };
+      });
       
       setAppointments(mappedAppointments);
+      console.log('Agendamentos mapeados:', mappedAppointments);
     } catch (error) {
       console.error('Erro inesperado ao buscar agendamentos:', error);
       toast({
@@ -355,22 +373,27 @@ export const AppointmentsManager = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-slate-800">Gerenciar Agendamentos</h2>
-        <Button onClick={openCreateForm} className="bg-blue-600 hover:bg-blue-700 text-white">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+          Gerenciar Agendamentos
+        </h2>
+        <Button 
+          onClick={openCreateForm} 
+          className="bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white shadow-lg font-medium"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Novo Agendamento
         </Button>
       </div>
 
-      <Card className="bg-white border-slate-200 shadow-lg">
-        <CardHeader className="bg-slate-50 border-b border-slate-200">
+      <Card className="pet-card border-0 shadow-medium">
+        <CardHeader className="bg-gradient-to-r from-blue-500 to-green-500 text-white rounded-t-lg">
           <div className="flex items-center space-x-2">
-            <Search className="w-4 h-4 text-slate-500" />
+            <Search className="w-4 h-4 text-blue-100" />
             <Input
               placeholder="Buscar por pet, serviço ou telefone..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+              className="max-w-sm bg-white/10 border-white/20 text-white placeholder:text-blue-100 focus:border-white focus:ring-white"
             />
           </div>
         </CardHeader>
@@ -382,37 +405,55 @@ export const AppointmentsManager = () => {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-100 border-b border-slate-200 hover:bg-slate-100">
-                  <TableHead className="text-slate-700 font-semibold">Data/Hora</TableHead>
-                  <TableHead className="text-slate-700 font-semibold">Pet</TableHead>
-                  <TableHead className="text-slate-700 font-semibold">Serviço</TableHead>
-                  <TableHead className="text-slate-700 font-semibold">Telefone</TableHead>
-                  <TableHead className="text-slate-700 font-semibold">Status</TableHead>
-                  <TableHead className="text-slate-700 font-semibold">Ações</TableHead>
+                <TableRow className="bg-gradient-to-r from-blue-50 to-green-50 border-b border-blue-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-green-50">
+                  <TableHead className="text-blue-700 font-semibold">Data/Hora</TableHead>
+                  <TableHead className="text-blue-700 font-semibold">Pet</TableHead>
+                  <TableHead className="text-blue-700 font-semibold">Cliente</TableHead>
+                  <TableHead className="text-blue-700 font-semibold">Serviço</TableHead>
+                  <TableHead className="text-blue-700 font-semibold">Telefone</TableHead>
+                  <TableHead className="text-blue-700 font-semibold">Status</TableHead>
+                  <TableHead className="text-blue-700 font-semibold">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredAppointments.map((appointment) => (
-                  <TableRow key={appointment.cdAgendamento} className="border-b border-slate-100 hover:bg-slate-50">
-                    <TableCell className="text-slate-700">
+                  <TableRow key={appointment.cdAgendamento} className="border-b border-blue-100 hover:bg-blue-50/50">
+                    <TableCell className="text-slate-700 font-medium">
                       {formatDate(appointment.dtStart)}
                     </TableCell>
-                    <TableCell className="font-medium text-slate-800">
+                    <TableCell className="font-semibold text-blue-800">
                       {appointment.nmPet || 'N/A'}
+                    </TableCell>
+                    <TableCell className="text-slate-700">
+                      {appointment.dsNomeCliente || 'N/A'}
                     </TableCell>
                     <TableCell className="text-slate-700">{appointment.dsServico || 'N/A'}</TableCell>
                     <TableCell className="text-slate-700">{appointment.nuTelefoneWhatsapp || 'N/A'}</TableCell>
                     <TableCell>
-                      <Badge variant={appointment.flComparecimento ? "default" : "secondary"} className={appointment.flComparecimento ? "bg-green-100 text-green-800 border-green-200" : "bg-gray-100 text-gray-600 border-gray-200"}>
+                      <Badge 
+                        variant={appointment.flComparecimento ? "default" : "secondary"} 
+                        className={appointment.flComparecimento 
+                          ? "bg-gradient-to-r from-green-500 to-green-600 text-white border-0" 
+                          : "bg-gradient-to-r from-gray-400 to-gray-500 text-white border-0"
+                        }
+                      >
                         {appointment.flComparecimento ? 'Compareceu' : 'Pendente'}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" className="border-green-300 text-green-700 hover:bg-green-50">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="border-green-300 text-green-700 hover:bg-green-50"
+                        >
                           <CheckCircle className="w-4 h-4" />
                         </Button>
-                        <Button variant="destructive" size="sm" className="bg-red-600 hover:bg-red-700">
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          className="bg-red-500 hover:bg-red-600"
+                        >
                           <XCircle className="w-4 h-4" />
                         </Button>
                       </div>
@@ -421,7 +462,7 @@ export const AppointmentsManager = () => {
                 ))}
                 {filteredAppointments.length === 0 && !loading && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                       {searchTerm ? 'Nenhum agendamento encontrado com esse termo' : 'Nenhum agendamento cadastrado'}
                     </TableCell>
                   </TableRow>
@@ -433,16 +474,18 @@ export const AppointmentsManager = () => {
       </Card>
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="sm:max-w-[500px] bg-white">
-          <DialogHeader className="text-center">
-            <DialogTitle className="text-xl font-semibold text-blue-600">Novo Agendamento</DialogTitle>
-            <DialogDescription className="text-gray-600">
+        <DialogContent className="sm:max-w-[500px] bg-white border-0 shadow-xl">
+          <DialogHeader className="text-center border-b border-blue-100 pb-4">
+            <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+              Novo Agendamento
+            </DialogTitle>
+            <DialogDescription className="text-gray-600 font-medium">
               Preencha as informações do novo agendamento
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-6 py-6">
             <div className="space-y-2">
-              <Label htmlFor="datetime" className="text-sm font-medium text-gray-700">
+              <Label htmlFor="datetime" className="text-sm font-semibold text-blue-700">
                 Data/Hora *
               </Label>
               <Input
@@ -450,19 +493,19 @@ export const AppointmentsManager = () => {
                 type="datetime-local"
                 value={formData.dtStart}
                 onChange={(e) => setFormData(prev => ({ ...prev, dtStart: e.target.value }))}
-                className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className="w-full border-blue-200 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="service" className="text-sm font-medium text-gray-700">
+              <Label htmlFor="service" className="text-sm font-semibold text-blue-700">
                 Serviço *
               </Label>
               <Select value={formData.cdservico} onValueChange={(value) => setFormData(prev => ({ ...prev, cdservico: value }))}>
-                <SelectTrigger className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                <SelectTrigger className="w-full border-blue-200 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
                   <SelectValue placeholder="Selecione um serviço" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 shadow-lg">
+                <SelectContent className="bg-white border border-blue-200 shadow-lg rounded-lg">
                   {services.map((service) => (
                     <SelectItem key={service.cdservico} value={service.cdservico.toString()} className="hover:bg-blue-50">
                       {service.dsservico}
@@ -474,14 +517,14 @@ export const AppointmentsManager = () => {
 
             {clientes.length > 0 && (
               <div className="space-y-2">
-                <Label htmlFor="cliente" className="text-sm font-medium text-gray-700">
+                <Label htmlFor="cliente" className="text-sm font-semibold text-blue-700">
                   Cliente
                 </Label>
                 <Select value={formData.cdCliente} onValueChange={(value) => setFormData(prev => ({ ...prev, cdCliente: value, cdPet: '' }))}>
-                  <SelectTrigger className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                  <SelectTrigger className="w-full border-blue-200 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
                     <SelectValue placeholder="Selecione um cliente" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 shadow-lg">
+                  <SelectContent className="bg-white border border-blue-200 shadow-lg rounded-lg">
                     {clientes.map((cliente) => (
                       <SelectItem key={cliente.cdCliente} value={cliente.cdCliente.toString()} className="hover:bg-blue-50">
                         {cliente.dsNome || `Cliente ${cliente.cdCliente}`}
@@ -494,14 +537,14 @@ export const AppointmentsManager = () => {
 
             {getAvailablePets().length > 0 && (
               <div className="space-y-2">
-                <Label htmlFor="pet" className="text-sm font-medium text-gray-700">
+                <Label htmlFor="pet" className="text-sm font-semibold text-blue-700">
                   Pet
                 </Label>
                 <Select value={formData.cdPet} onValueChange={(value) => setFormData(prev => ({ ...prev, cdPet: value }))}>
-                  <SelectTrigger className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                  <SelectTrigger className="w-full border-blue-200 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
                     <SelectValue placeholder="Selecione um pet" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 shadow-lg">
+                  <SelectContent className="bg-white border border-blue-200 shadow-lg rounded-lg">
                     {getAvailablePets().map((pet) => (
                       <SelectItem key={pet.cdPet} value={pet.cdPet.toString()} className="hover:bg-blue-50">
                         {pet.nmPet}
@@ -512,17 +555,17 @@ export const AppointmentsManager = () => {
               </div>
             )}
           </div>
-          <DialogFooter className="flex space-x-2 pt-4">
+          <DialogFooter className="flex space-x-3 pt-6 border-t border-blue-100">
             <Button 
               variant="outline" 
               onClick={() => setShowForm(false)}
-              className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50"
+              className="flex-1 border-blue-200 text-blue-700 hover:bg-blue-50 font-medium"
             >
               Cancelar
             </Button>
             <Button 
               onClick={handleCreateAppointment} 
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+              className="flex-1 bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white font-medium shadow-lg"
             >
               Criar Agendamento
             </Button>

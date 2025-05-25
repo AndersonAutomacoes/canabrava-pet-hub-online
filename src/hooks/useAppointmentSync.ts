@@ -30,36 +30,51 @@ export const useAppointmentSync = () => {
     try {
       console.log('Buscando agendamentos com dados relacionados...');
       
-      const { data, error } = await supabase
+      // Buscar agendamentos primeiro
+      const { data: appointmentsData, error: appointmentsError } = await supabase
         .from('Agendamento')
-        .select(`
-          *,
-          servico!inner(dsservico),
-          Pet!inner(nmPet),
-          Clientes!inner(dsNome, nuTelefoneWhatsapp)
-        `)
+        .select('*')
         .order('dtStart', { ascending: true });
 
-      console.log('Resultado da busca de agendamentos:', { data, error });
+      console.log('Resultado da busca de agendamentos:', { data: appointmentsData, error: appointmentsError });
 
-      if (error) throw error;
+      if (appointmentsError) throw appointmentsError;
 
-      // Mapear os dados para o formato esperado
-      const mappedAppointments = (data || []).map(appointment => ({
-        cdAgendamento: appointment.cdAgendamento,
-        dtStart: appointment.dtStart,
-        dtEnd: appointment.dtEnd,
-        cdCliente: appointment.cdCliente,
-        cdPet: appointment.cdPet,
-        cdServico: appointment.cdServico,
-        cdEmpresa: appointment.cdEmpresa,
-        flComparecimento: appointment.flComparecimento,
-        dtCreatedAt: appointment.dtCreatedAt,
-        dsServico: appointment.servico?.dsservico,
-        nmPet: appointment.Pet?.nmPet,
-        dsNomeCliente: appointment.Clientes?.dsNome,
-        nuTelefoneWhatsapp: appointment.Clientes?.nuTelefoneWhatsapp
-      }));
+      // Buscar dados relacionados separadamente
+      const { data: servicesData } = await supabase
+        .from('servico')
+        .select('cdservico, dsservico');
+
+      const { data: clientesData } = await supabase
+        .from('Clientes')
+        .select('cdCliente, dsNome, nuTelefoneWhatsapp');
+
+      const { data: petsData } = await supabase
+        .from('Pet')
+        .select('cdPet, nmPet, cdCliente');
+
+      // Mapear os dados manualmente
+      const mappedAppointments = (appointmentsData || []).map(appointment => {
+        const service = servicesData?.find(s => s.cdservico === appointment.cdServico);
+        const cliente = clientesData?.find(c => c.cdCliente === appointment.cdCliente);
+        const pet = petsData?.find(p => p.cdPet === appointment.cdPet);
+
+        return {
+          cdAgendamento: appointment.cdAgendamento,
+          dtStart: appointment.dtStart,
+          dtEnd: appointment.dtEnd,
+          cdCliente: appointment.cdCliente,
+          cdPet: appointment.cdPet,
+          cdServico: appointment.cdServico,
+          cdEmpresa: appointment.cdEmpresa,
+          flComparecimento: appointment.flComparecimento,
+          dtCreatedAt: appointment.dtCreatedAt,
+          dsServico: service?.dsservico,
+          nmPet: pet?.nmPet,
+          dsNomeCliente: cliente?.dsNome,
+          nuTelefoneWhatsapp: cliente?.nuTelefoneWhatsapp
+        };
+      });
 
       setAppointments(mappedAppointments);
     } catch (error) {
