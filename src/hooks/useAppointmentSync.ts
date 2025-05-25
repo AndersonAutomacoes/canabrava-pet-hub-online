@@ -13,6 +13,11 @@ interface Appointment {
   cdEmpresa: number;
   flComparecimento: boolean;
   dtCreatedAt: string;
+  // Dados relacionados
+  dsServico?: string;
+  nmPet?: string;
+  dsNomeCliente?: string;
+  nuTelefoneWhatsapp?: string;
 }
 
 export const useAppointmentSync = () => {
@@ -23,13 +28,40 @@ export const useAppointmentSync = () => {
   const fetchAppointments = async () => {
     setLoading(true);
     try {
+      console.log('Buscando agendamentos com dados relacionados...');
+      
       const { data, error } = await supabase
         .from('Agendamento')
-        .select('*')
+        .select(`
+          *,
+          servico!inner(dsservico),
+          Pet!inner(nmPet),
+          Clientes!inner(dsNome, nuTelefoneWhatsapp)
+        `)
         .order('dtStart', { ascending: true });
 
+      console.log('Resultado da busca de agendamentos:', { data, error });
+
       if (error) throw error;
-      setAppointments(data || []);
+
+      // Mapear os dados para o formato esperado
+      const mappedAppointments = (data || []).map(appointment => ({
+        cdAgendamento: appointment.cdAgendamento,
+        dtStart: appointment.dtStart,
+        dtEnd: appointment.dtEnd,
+        cdCliente: appointment.cdCliente,
+        cdPet: appointment.cdPet,
+        cdServico: appointment.cdServico,
+        cdEmpresa: appointment.cdEmpresa,
+        flComparecimento: appointment.flComparecimento,
+        dtCreatedAt: appointment.dtCreatedAt,
+        dsServico: appointment.servico?.dsservico,
+        nmPet: appointment.Pet?.nmPet,
+        dsNomeCliente: appointment.Clientes?.dsNome,
+        nuTelefoneWhatsapp: appointment.Clientes?.nuTelefoneWhatsapp
+      }));
+
+      setAppointments(mappedAppointments);
     } catch (error) {
       console.error('Erro ao buscar agendamentos:', error);
       toast({
@@ -99,10 +131,10 @@ export const useAppointmentSync = () => {
       )
       .subscribe();
 
-    // Sincronização automática a cada 5 minutos
+    // Sincronização automática a cada 30 segundos para garantir dados atualizados
     const syncInterval = setInterval(() => {
       syncAppointments();
-    }, 5 * 60 * 1000); // 5 minutos
+    }, 30 * 1000); // 30 segundos
 
     return () => {
       supabase.removeChannel(channel);

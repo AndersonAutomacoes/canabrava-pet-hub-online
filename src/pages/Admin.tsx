@@ -44,45 +44,45 @@ const Admin = () => {
           </div>
 
           <Tabs defaultValue="dashboard" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6 bg-white shadow-medium rounded-lg p-1">
+            <TabsList className="grid w-full grid-cols-6 bg-white shadow-lg rounded-lg p-1 border border-gray-200">
               <TabsTrigger 
                 value="dashboard" 
-                className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-green-500 data-[state=active]:text-white"
+                className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-green-500 data-[state=active]:text-white font-medium"
               >
                 <BarChart3 className="w-4 h-4" />
                 <span className="hidden sm:inline">Dashboard</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="products" 
-                className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-green-500 data-[state=active]:text-white"
+                className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-green-500 data-[state=active]:text-white font-medium"
               >
                 <Package className="w-4 h-4" />
                 <span className="hidden sm:inline">Produtos</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="orders" 
-                className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-green-500 data-[state=active]:text-white"
+                className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-green-500 data-[state=active]:text-white font-medium"
               >
                 <ShoppingCart className="w-4 h-4" />
                 <span className="hidden sm:inline">Pedidos</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="appointments" 
-                className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-green-500 data-[state=active]:text-white"
+                className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-green-500 data-[state=active]:text-white font-medium"
               >
                 <Calendar className="w-4 h-4" />
                 <span className="hidden sm:inline">Agendamentos</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="services" 
-                className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-green-500 data-[state=active]:text-white"
+                className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-green-500 data-[state=active]:text-white font-medium"
               >
                 <Settings className="w-4 h-4" />
                 <span className="hidden sm:inline">Serviços</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="blog" 
-                className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-green-500 data-[state=active]:text-white"
+                className="flex items-center space-x-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-green-500 data-[state=active]:text-white font-medium"
               >
                 <PenTool className="w-4 h-4" />
                 <span className="hidden sm:inline">Blog</span>

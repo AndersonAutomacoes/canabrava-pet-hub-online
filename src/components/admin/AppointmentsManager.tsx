@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,8 @@ interface Appointment {
   dsServico?: string;
   nmPet?: string;
   nuTelefoneWhatsapp?: string;
+  cdServico?: number;
+  cdPet?: number;
 }
 
 interface Service {
@@ -30,6 +33,7 @@ interface Service {
 interface Cliente {
   cdCliente: number;
   dsNome?: string;
+  nuTelefoneWhatsapp?: string;
 }
 
 interface Pet {
@@ -48,12 +52,9 @@ export const AppointmentsManager = () => {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     dtStart: '',
-    dtEnd: '',
     cdservico: '',
     cdCliente: '',
-    cdPet: '',
-    nmPet: '',
-    nuTelefoneWhatsapp: ''
+    cdPet: ''
   });
   const { toast } = useToast();
 
@@ -83,7 +84,7 @@ export const AppointmentsManager = () => {
       
       const { data, error } = await supabase
         .from('Clientes')
-        .select('cdCliente, dsNome')
+        .select('cdCliente, dsNome, nuTelefoneWhatsapp')
         .order('dsNome');
 
       console.log('Resultado da busca de clientes:', { data, error });
@@ -123,11 +124,16 @@ export const AppointmentsManager = () => {
 
   const fetchAppointments = async () => {
     try {
-      console.log('Buscando agendamentos...');
+      console.log('Buscando agendamentos com joins...');
       
       const { data, error } = await supabase
         .from('Agendamento')
-        .select('*')
+        .select(`
+          *,
+          servico!inner(dsservico),
+          Pet!inner(nmPet),
+          Clientes!inner(dsNome, nuTelefoneWhatsapp)
+        `)
         .order('dtStart', { ascending: false });
 
       console.log('Resultado da busca de agendamentos:', { data, error });
@@ -142,7 +148,20 @@ export const AppointmentsManager = () => {
         return;
       }
       
-      setAppointments(data || []);
+      // Mapear os dados para o formato esperado
+      const mappedAppointments = (data || []).map(appointment => ({
+        cdAgendamento: appointment.cdAgendamento,
+        dtStart: appointment.dtStart,
+        cdCliente: appointment.cdCliente,
+        flComparecimento: appointment.flComparecimento,
+        cdServico: appointment.cdServico,
+        cdPet: appointment.cdPet,
+        dsServico: appointment.servico?.dsservico,
+        nmPet: appointment.Pet?.nmPet,
+        nuTelefoneWhatsapp: appointment.Clientes?.nuTelefoneWhatsapp
+      }));
+      
+      setAppointments(mappedAppointments);
     } catch (error) {
       console.error('Erro inesperado ao buscar agendamentos:', error);
       toast({
@@ -179,7 +198,6 @@ export const AppointmentsManager = () => {
     let clienteId = null;
     let petId = null;
 
-    // Verificar se existe cliente, senão criar um
     if (clientes.length === 0) {
       try {
         console.log('Criando cliente padrão...');
@@ -204,10 +222,9 @@ export const AppointmentsManager = () => {
         throw new Error('Não foi possível criar cliente padrão');
       }
     } else {
-      clienteId = clientes[0].cdCliente;
+      clienteId = formData.cdCliente ? parseInt(formData.cdCliente) : clientes[0].cdCliente;
     }
 
-    // Verificar se existe pet, senão criar um
     if (pets.length === 0) {
       try {
         console.log('Criando pet padrão...');
@@ -232,7 +249,7 @@ export const AppointmentsManager = () => {
         throw new Error('Não foi possível criar pet padrão');
       }
     } else {
-      petId = pets[0].cdPet;
+      petId = formData.cdPet ? parseInt(formData.cdPet) : pets.filter(pet => pet.cdCliente === clienteId)[0]?.cdPet || pets[0].cdPet;
     }
 
     return { clienteId, petId };
@@ -251,7 +268,6 @@ export const AppointmentsManager = () => {
 
       console.log('Criando agendamento:', formData);
 
-      // Garantir que temos dados necessários
       const { clienteId, petId } = await ensureRequiredData();
 
       const startDateTime = new Date(formData.dtStart);
@@ -295,12 +311,9 @@ export const AppointmentsManager = () => {
       setShowForm(false);
       setFormData({
         dtStart: '',
-        dtEnd: '',
         cdservico: '',
         cdCliente: '',
-        cdPet: '',
-        nmPet: '',
-        nuTelefoneWhatsapp: ''
+        cdPet: ''
       });
       await fetchAppointments();
     } catch (error) {
@@ -316,12 +329,9 @@ export const AppointmentsManager = () => {
   const openCreateForm = () => {
     setFormData({
       dtStart: '',
-      dtEnd: '',
       cdservico: '',
       cdCliente: '',
-      cdPet: '',
-      nmPet: '',
-      nuTelefoneWhatsapp: ''
+      cdPet: ''
     });
     setShowForm(true);
   };
@@ -337,11 +347,16 @@ export const AppointmentsManager = () => {
     return new Date(dateString).toLocaleString('pt-BR');
   };
 
+  const getAvailablePets = () => {
+    if (!formData.cdCliente) return pets;
+    return pets.filter(pet => pet.cdCliente === parseInt(formData.cdCliente));
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-slate-800">Gerenciar Agendamentos</h2>
-        <Button onClick={openCreateForm} className="bg-green-600 hover:bg-green-700 text-white">
+        <Button onClick={openCreateForm} className="bg-blue-600 hover:bg-blue-700 text-white">
           <Plus className="w-4 h-4 mr-2" />
           Novo Agendamento
         </Button>
@@ -355,7 +370,7 @@ export const AppointmentsManager = () => {
               placeholder="Buscar por pet, serviço ou telefone..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm bg-white border-slate-300 focus:border-green-500 focus:ring-green-500"
+              className="max-w-sm bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
         </CardHeader>
@@ -418,16 +433,16 @@ export const AppointmentsManager = () => {
       </Card>
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Novo Agendamento</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="sm:max-w-[500px] bg-white">
+          <DialogHeader className="text-center">
+            <DialogTitle className="text-xl font-semibold text-blue-600">Novo Agendamento</DialogTitle>
+            <DialogDescription className="text-gray-600">
               Preencha as informações do novo agendamento
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="datetime" className="text-right">
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="datetime" className="text-sm font-medium text-gray-700">
                 Data/Hora *
               </Label>
               <Input
@@ -435,38 +450,40 @@ export const AppointmentsManager = () => {
                 type="datetime-local"
                 value={formData.dtStart}
                 onChange={(e) => setFormData(prev => ({ ...prev, dtStart: e.target.value }))}
-                className="col-span-3"
+                className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="service" className="text-right">
+            
+            <div className="space-y-2">
+              <Label htmlFor="service" className="text-sm font-medium text-gray-700">
                 Serviço *
               </Label>
               <Select value={formData.cdservico} onValueChange={(value) => setFormData(prev => ({ ...prev, cdservico: value }))}>
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                   <SelectValue placeholder="Selecione um serviço" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border border-gray-200 shadow-lg">
                   {services.map((service) => (
-                    <SelectItem key={service.cdservico} value={service.cdservico.toString()}>
+                    <SelectItem key={service.cdservico} value={service.cdservico.toString()} className="hover:bg-blue-50">
                       {service.dsservico}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+
             {clientes.length > 0 && (
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="cliente" className="text-right">
+              <div className="space-y-2">
+                <Label htmlFor="cliente" className="text-sm font-medium text-gray-700">
                   Cliente
                 </Label>
-                <Select value={formData.cdCliente} onValueChange={(value) => setFormData(prev => ({ ...prev, cdCliente: value }))}>
-                  <SelectTrigger className="col-span-3">
+                <Select value={formData.cdCliente} onValueChange={(value) => setFormData(prev => ({ ...prev, cdCliente: value, cdPet: '' }))}>
+                  <SelectTrigger className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                     <SelectValue placeholder="Selecione um cliente" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white border border-gray-200 shadow-lg">
                     {clientes.map((cliente) => (
-                      <SelectItem key={cliente.cdCliente} value={cliente.cdCliente.toString()}>
+                      <SelectItem key={cliente.cdCliente} value={cliente.cdCliente.toString()} className="hover:bg-blue-50">
                         {cliente.dsNome || `Cliente ${cliente.cdCliente}`}
                       </SelectItem>
                     ))}
@@ -474,18 +491,19 @@ export const AppointmentsManager = () => {
                 </Select>
               </div>
             )}
-            {pets.length > 0 && (
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="pet" className="text-right">
+
+            {getAvailablePets().length > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="pet" className="text-sm font-medium text-gray-700">
                   Pet
                 </Label>
                 <Select value={formData.cdPet} onValueChange={(value) => setFormData(prev => ({ ...prev, cdPet: value }))}>
-                  <SelectTrigger className="col-span-3">
+                  <SelectTrigger className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                     <SelectValue placeholder="Selecione um pet" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {pets.map((pet) => (
-                      <SelectItem key={pet.cdPet} value={pet.cdPet.toString()}>
+                  <SelectContent className="bg-white border border-gray-200 shadow-lg">
+                    {getAvailablePets().map((pet) => (
+                      <SelectItem key={pet.cdPet} value={pet.cdPet.toString()} className="hover:bg-blue-50">
                         {pet.nmPet}
                       </SelectItem>
                     ))}
@@ -494,11 +512,18 @@ export const AppointmentsManager = () => {
               </div>
             )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowForm(false)}>
+          <DialogFooter className="flex space-x-2 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowForm(false)}
+              className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
               Cancelar
             </Button>
-            <Button onClick={handleCreateAppointment} className="bg-green-600 hover:bg-green-700">
+            <Button 
+              onClick={handleCreateAppointment} 
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+            >
               Criar Agendamento
             </Button>
           </DialogFooter>
