@@ -91,6 +91,12 @@ export const useBlog = () => {
         throw new Error('Título, conteúdo e slug são obrigatórios');
       }
 
+      // Verificar se o usuário está autenticado
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+
       // Preparar dados para inserção
       const insertData = {
         titulo: postData.titulo.trim(),
@@ -116,6 +122,9 @@ export const useBlog = () => {
         console.error('Erro detalhado ao criar post:', error);
         if (error.code === '23505') {
           throw new Error('Já existe um post com este slug. Escolha outro slug.');
+        }
+        if (error.code === '42501') {
+          throw new Error('Você não tem permissão para criar posts. Verifique se você é um administrador.');
         }
         throw error;
       }
@@ -154,6 +163,9 @@ export const useBlog = () => {
 
       if (error) {
         console.error('Erro ao atualizar post:', error);
+        if (error.code === '42501') {
+          throw new Error('Você não tem permissão para atualizar posts.');
+        }
         throw error;
       }
 
@@ -168,9 +180,10 @@ export const useBlog = () => {
       return data;
     } catch (error) {
       console.error('Erro ao atualizar post:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Não foi possível atualizar o post.';
       toast({
         title: "Erro",
-        description: "Não foi possível atualizar o post.",
+        description: errorMessage,
         variant: "destructive",
       });
       throw error;
@@ -188,6 +201,9 @@ export const useBlog = () => {
 
       if (error) {
         console.error('Erro ao excluir post:', error);
+        if (error.code === '42501') {
+          throw new Error('Você não tem permissão para excluir posts.');
+        }
         throw error;
       }
 
@@ -201,9 +217,10 @@ export const useBlog = () => {
       await fetchPosts(false);
     } catch (error) {
       console.error('Erro ao excluir post:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Não foi possível excluir o post.';
       toast({
         title: "Erro",
-        description: "Não foi possível excluir o post.",
+        description: errorMessage,
         variant: "destructive",
       });
       throw error;

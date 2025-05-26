@@ -11,6 +11,7 @@ import { Search, Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useBlog } from '@/hooks/useBlog';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface BlogPost {
   id: string;
@@ -29,6 +30,7 @@ interface BlogPost {
 
 export const BlogManager = () => {
   const { posts, loading, createPost, updatePost, deletePost } = useBlog();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
@@ -45,6 +47,17 @@ export const BlogManager = () => {
   });
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
+
+  // Verificar se o usuário está autenticado
+  useEffect(() => {
+    if (!user) {
+      toast({
+        title: "Acesso negado",
+        description: "Você precisa estar logado para gerenciar o blog.",
+        variant: "destructive",
+      });
+    }
+  }, [user, toast]);
 
   const generateSlug = (titulo: string) => {
     return titulo
@@ -105,6 +118,7 @@ export const BlogManager = () => {
       });
     } catch (error) {
       console.error('Erro no handleCreatePost:', error);
+      // O erro já é tratado no hook useBlog
     } finally {
       setSubmitting(false);
     }
@@ -218,6 +232,18 @@ export const BlogManager = () => {
     (post.categoria && post.categoria.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (post.autor && post.autor.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  // Verificar se o usuário está logado antes de mostrar o conteúdo
+  if (!user) {
+    return (
+      <div className="space-y-6 bg-white">
+        <div className="text-center py-8">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Acesso Negado</h2>
+          <p className="text-gray-600">Você precisa estar logado como administrador para acessar esta página.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 bg-white">
