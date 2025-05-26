@@ -34,7 +34,7 @@ export const Breadcrumbs = ({ items, className }: BreadcrumbsProps) => {
       </button>
       
       {items.map((item, index) => (
-        <React.Fragment key={index}>
+        <div key={index} className="flex items-center space-x-2">
           <ChevronRight className="w-4 h-4 text-gray-400" />
           <button
             onClick={() => handleClick(item.href)}
@@ -48,7 +48,7 @@ export const Breadcrumbs = ({ items, className }: BreadcrumbsProps) => {
           >
             {item.label}
           </button>
-        </React.Fragment>
+        </div>
       ))}
     </nav>
   );

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -23,9 +23,11 @@ export const useBlog = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const fetchPosts = async (publishedOnly = true) => {
+  const fetchPosts = useCallback(async (publishedOnly = true) => {
     setLoading(true);
     try {
+      console.log('Buscando posts do blog...');
+      
       let query = supabase
         .from('blog_posts')
         .select('*')
@@ -37,10 +39,15 @@ export const useBlog = () => {
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar posts:', error);
+        throw error;
+      }
+
+      console.log('Posts carregados:', data);
       setPosts(data || []);
     } catch (error) {
-      console.error('Erro ao buscar posts:', error);
+      console.error('Erro ao carregar posts:', error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar os posts do blog.",
@@ -49,10 +56,12 @@ export const useBlog = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const getPostBySlug = async (slug: string) => {
+  const getPostBySlug = useCallback(async (slug: string) => {
     try {
+      console.log('Buscando post por slug:', slug);
+      
       const { data, error } = await supabase
         .from('blog_posts')
         .select('*')
@@ -60,28 +69,43 @@ export const useBlog = () => {
         .eq('publicado', true)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar post por slug:', error);
+        throw error;
+      }
+
+      console.log('Post encontrado por slug:', data);
       return data;
     } catch (error) {
       console.error('Erro ao buscar post:', error);
       return null;
     }
-  };
+  }, []);
 
-  const createPost = async (postData: Omit<BlogPost, 'id' | 'created_at' | 'updated_at'>) => {
+  const createPost = useCallback(async (postData: Omit<BlogPost, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      const { error } = await supabase
+      console.log('Criando post:', postData);
+      
+      const { data, error } = await supabase
         .from('blog_posts')
-        .insert([postData]);
+        .insert([postData])
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao criar post:', error);
+        throw error;
+      }
+
+      console.log('Post criado com sucesso:', data);
 
       toast({
         title: "Post criado!",
         description: "O post foi criado com sucesso.",
       });
 
-      fetchPosts(false);
+      await fetchPosts(false);
+      return data;
     } catch (error) {
       console.error('Erro ao criar post:', error);
       toast({
@@ -89,24 +113,35 @@ export const useBlog = () => {
         description: "Não foi possível criar o post.",
         variant: "destructive",
       });
+      throw error;
     }
-  };
+  }, [toast, fetchPosts]);
 
-  const updatePost = async (id: string, postData: Partial<BlogPost>) => {
+  const updatePost = useCallback(async (id: string, postData: Partial<BlogPost>) => {
     try {
-      const { error } = await supabase
+      console.log('Atualizando post:', id, postData);
+      
+      const { data, error } = await supabase
         .from('blog_posts')
         .update({ ...postData, updated_at: new Date().toISOString() })
-        .eq('id', id);
+        .eq('id', id)
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao atualizar post:', error);
+        throw error;
+      }
+
+      console.log('Post atualizado com sucesso:', data);
 
       toast({
         title: "Post atualizado!",
         description: "O post foi atualizado com sucesso.",
       });
 
-      fetchPosts(false);
+      await fetchPosts(false);
+      return data;
     } catch (error) {
       console.error('Erro ao atualizar post:', error);
       toast({
@@ -114,24 +149,32 @@ export const useBlog = () => {
         description: "Não foi possível atualizar o post.",
         variant: "destructive",
       });
+      throw error;
     }
-  };
+  }, [toast, fetchPosts]);
 
-  const deletePost = async (id: string) => {
+  const deletePost = useCallback(async (id: string) => {
     try {
+      console.log('Excluindo post:', id);
+      
       const { error } = await supabase
         .from('blog_posts')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao excluir post:', error);
+        throw error;
+      }
+
+      console.log('Post excluído com sucesso');
 
       toast({
         title: "Post excluído!",
         description: "O post foi excluído com sucesso.",
       });
 
-      fetchPosts(false);
+      await fetchPosts(false);
     } catch (error) {
       console.error('Erro ao excluir post:', error);
       toast({
@@ -139,12 +182,9 @@ export const useBlog = () => {
         description: "Não foi possível excluir o post.",
         variant: "destructive",
       });
+      throw error;
     }
-  };
-
-  useEffect(() => {
-    fetchPosts();
-  }, []);
+  }, [toast, fetchPosts]);
 
   return {
     posts,

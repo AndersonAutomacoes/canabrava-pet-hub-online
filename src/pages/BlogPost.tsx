@@ -1,27 +1,73 @@
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, User, ArrowLeft, Tag } from 'lucide-react';
-import { useBlog } from '@/hooks/useBlog';
+import { supabase } from '@/integrations/supabase/client';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+
+interface BlogPost {
+  id: string;
+  titulo: string;
+  conteudo: string;
+  resumo?: string;
+  imagem_url?: string;
+  categoria?: string;
+  autor?: string;
+  slug: string;
+  tags?: string[];
+  publicado: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
-  const { getPostBySlug } = useBlog();
-  const [post, setPost] = React.useState<any>(null);
-  const [loading, setLoading] = React.useState(true);
+  const [post, setPost] = useState<BlogPost | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  React.useEffect(() => {
-    const fetchPost = async () => {
-      if (slug) {
-        setLoading(true);
-        const postData = await getPostBySlug(slug);
-        setPost(postData);
-        setLoading(false);
+  const getPostBySlug = useCallback(async (postSlug: string) => {
+    try {
+      console.log('Buscando post com slug:', postSlug);
+      
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('*')
+        .eq('slug', postSlug)
+        .eq('publicado', true)
+        .single();
+
+      if (error) {
+        console.error('Erro ao buscar post:', error);
+        return null;
       }
+
+      console.log('Post encontrado:', data);
+      return data;
+    } catch (error) {
+      console.error('Erro inesperado ao buscar post:', error);
+      return null;
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchPost = async () => {
+      if (!slug) {
+        console.log('Slug não encontrado');
+        setLoading(false);
+        return;
+      }
+
+      console.log('Iniciando busca do post...');
+      setLoading(true);
+      
+      const postData = await getPostBySlug(slug);
+      setPost(postData);
+      setLoading(false);
+      
+      console.log('Busca finalizada. Post:', postData);
     };
 
     fetchPost();
