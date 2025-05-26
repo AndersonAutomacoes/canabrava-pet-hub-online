@@ -27,6 +27,7 @@ const CheckoutFlow = () => {
   const [observations, setObservations] = useState('');
   const [freteValor, setFreteValor] = useState(0);
   const [fretePrazo, setFretePrazo] = useState(1);
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   
   const { cartItems, getCartTotal, clearCart } = useCart();
   const { user } = useAuth();
@@ -80,7 +81,7 @@ const CheckoutFlow = () => {
     setLoading(true);
     
     try {
-      // Criar pedido com valor do frete incluído
+      // Criar pedido
       const subtotal = getCartTotal();
       const total = subtotal + freteValor;
       
@@ -114,15 +115,33 @@ const CheckoutFlow = () => {
 
       if (itensError) throw itensError;
 
-      // Limpar carrinho
-      await clearCart();
-      
-      setStep(4);
-      
-      toast({
-        title: "Pedido confirmado!",
-        description: `Seu pedido #${pedido.id.slice(-8)} foi criado com sucesso.`,
-      });
+      setCurrentOrderId(pedido.id);
+
+      // Se for pagamento com cartão, processar via Stripe
+      if (paymentMethod === 'cartao_credito' || paymentMethod === 'cartao_debito') {
+        const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-payment', {
+          body: { pedidoId: pedido.id }
+        });
+
+        if (paymentError) throw paymentError;
+
+        // Redirecionar para Stripe Checkout em nova aba
+        window.open(paymentData.url, '_blank');
+        
+        toast({
+          title: "Redirecionando para pagamento",
+          description: "Uma nova aba foi aberta para completar o pagamento.",
+        });
+      } else {
+        // Para outros métodos de pagamento, finalizar normalmente
+        await clearCart();
+        setStep(4);
+        
+        toast({
+          title: "Pedido confirmado!",
+          description: `Seu pedido #${pedido.id.slice(-8)} foi criado com sucesso.`,
+        });
+      }
 
     } catch (error) {
       console.error('Erro ao criar pedido:', error);
@@ -286,12 +305,21 @@ const CheckoutFlow = () => {
                     <SelectValue placeholder="Selecione o método de pagamento" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="cartao_credito">Cartão de Crédito (Stripe)</SelectItem>
+                    <SelectItem value="cartao_debito">Cartão de Débito (Stripe)</SelectItem>
                     <SelectItem value="pix">PIX</SelectItem>
-                    <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
-                    <SelectItem value="cartao_debito">Cartão de Débito</SelectItem>
                     <SelectItem value="dinheiro">Dinheiro na Entrega</SelectItem>
                   </SelectContent>
                 </Select>
+
+                {(paymentMethod === 'cartao_credito' || paymentMethod === 'cartao_debito') && (
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <p className="text-blue-800 text-sm">
+                      <CreditCard className="w-4 h-4 inline mr-2" />
+                      Você será redirecionado para uma página segura do Stripe para inserir os dados do cartão.
+                    </p>
+                  </div>
+                )}
 
                 <div>
                   <Label htmlFor="observations">Observações (opcional)</Label>
@@ -341,8 +369,8 @@ const CheckoutFlow = () => {
                   <h3 className="font-semibold mb-2">Método de Pagamento</h3>
                   <p className="text-gray-700">
                     {paymentMethod === 'pix' && 'PIX'}
-                    {paymentMethod === 'cartao_credito' && 'Cartão de Crédito'}
-                    {paymentMethod === 'cartao_debito' && 'Cartão de Débito'}
+                    {paymentMethod === 'cartao_credito' && 'Cartão de Crédito (Stripe)'}
+                    {paymentMethod === 'cartao_debito' && 'Cartão de Débito (Stripe)'}
                     {paymentMethod === 'dinheiro' && 'Dinheiro na Entrega'}
                   </p>
                 </div>
@@ -378,7 +406,10 @@ const CheckoutFlow = () => {
                     className="flex-1 bg-green-600 hover:bg-green-700"
                     disabled={loading}
                   >
-                    {loading ? 'Processando...' : 'Confirmar Pedido'}
+                    {loading ? 'Processando...' : 
+                     (paymentMethod === 'cartao_credito' || paymentMethod === 'cartao_debito') 
+                       ? 'Pagar com Stripe' 
+                       : 'Confirmar Pedido'}
                   </Button>
                 </div>
               </CardContent>

@@ -15,6 +15,7 @@ import Produtos from "./pages/Produtos";
 import Agendamento from "./pages/Agendamento";
 import Carrinho from "./pages/Carrinho";
 import Checkout from "./pages/Checkout";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import Blog from "./pages/Blog";
@@ -50,6 +51,7 @@ const AppContent = () => {
                 <Route path="/agendamento" element={<Agendamento />} />
                 <Route path="/carrinho" element={<Carrinho />} />
                 <Route path="/checkout" element={<Checkout />} />
+                <Route path="/payment-success" element={<PaymentSuccess />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/:slug" element={<BlogPost />} />
