@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Search, Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useBlog } from '@/hooks/useBlog';
@@ -30,7 +28,7 @@ interface BlogPost {
 }
 
 export const BlogManager = () => {
-  const { posts, loading, fetchPosts } = useBlog();
+  const { posts, loading, createPost, updatePost, deletePost } = useBlog();
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
@@ -45,6 +43,7 @@ export const BlogManager = () => {
     slug: '',
     publicado: false
   });
+  const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
   const generateSlug = (titulo: string) => {
@@ -59,7 +58,11 @@ export const BlogManager = () => {
   };
 
   const handleCreatePost = async () => {
+    if (submitting) return;
+    
     try {
+      setSubmitting(true);
+      
       if (!formData.titulo.trim() || !formData.conteudo.trim()) {
         toast({
           title: "Campos obrigatórios",
@@ -69,29 +72,24 @@ export const BlogManager = () => {
         return;
       }
 
-      const slug = formData.slug || generateSlug(formData.titulo);
-      const tags = formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : [];
+      const slug = formData.slug.trim() || generateSlug(formData.titulo);
+      const tags = formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
 
-      const { error } = await supabase
-        .from('blog_posts')
-        .insert([{
-          titulo: formData.titulo,
-          conteudo: formData.conteudo,
-          resumo: formData.resumo || null,
-          imagem_url: formData.imagem_url || null,
-          categoria: formData.categoria || null,
-          tags: tags.length > 0 ? tags : null,
-          autor: formData.autor || null,
-          slug,
-          publicado: formData.publicado
-        }]);
+      const postData = {
+        titulo: formData.titulo.trim(),
+        conteudo: formData.conteudo.trim(),
+        resumo: formData.resumo.trim() || undefined,
+        imagem_url: formData.imagem_url.trim() || undefined,
+        categoria: formData.categoria.trim() || undefined,
+        tags: tags.length > 0 ? tags : undefined,
+        autor: formData.autor.trim() || undefined,
+        slug,
+        publicado: formData.publicado
+      };
 
-      if (error) throw error;
+      console.log('Enviando dados do post:', postData);
 
-      toast({
-        title: "Post criado!",
-        description: "O post foi criado com sucesso.",
-      });
+      await createPost(postData);
 
       setShowForm(false);
       setFormData({
@@ -105,21 +103,19 @@ export const BlogManager = () => {
         slug: '',
         publicado: false
       });
-      fetchPosts(false);
     } catch (error) {
-      console.error('Erro ao criar post:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível criar o post.",
-        variant: "destructive",
-      });
+      console.error('Erro no handleCreatePost:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleUpdatePost = async () => {
-    if (!editingPost) return;
+    if (!editingPost || submitting) return;
 
     try {
+      setSubmitting(true);
+      
       if (!formData.titulo.trim() || !formData.conteudo.trim()) {
         toast({
           title: "Campos obrigatórios",
@@ -129,31 +125,23 @@ export const BlogManager = () => {
         return;
       }
 
-      const slug = formData.slug || generateSlug(formData.titulo);
-      const tags = formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : [];
+      const slug = formData.slug.trim() || generateSlug(formData.titulo);
+      const tags = formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
 
-      const { error } = await supabase
-        .from('blog_posts')
-        .update({
-          titulo: formData.titulo,
-          conteudo: formData.conteudo,
-          resumo: formData.resumo || null,
-          imagem_url: formData.imagem_url || null,
-          categoria: formData.categoria || null,
-          tags: tags.length > 0 ? tags : null,
-          autor: formData.autor || null,
-          slug,
-          publicado: formData.publicado,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', editingPost.id);
+      const postData = {
+        titulo: formData.titulo.trim(),
+        conteudo: formData.conteudo.trim(),
+        resumo: formData.resumo.trim() || null,
+        imagem_url: formData.imagem_url.trim() || null,
+        categoria: formData.categoria.trim() || null,
+        tags: tags.length > 0 ? tags : null,
+        autor: formData.autor.trim() || null,
+        slug,
+        publicado: formData.publicado,
+        updated_at: new Date().toISOString()
+      };
 
-      if (error) throw error;
-
-      toast({
-        title: "Post atualizado!",
-        description: "O post foi atualizado com sucesso.",
-      });
+      await updatePost(editingPost.id, postData);
 
       setShowForm(false);
       setEditingPost(null);
@@ -168,14 +156,10 @@ export const BlogManager = () => {
         slug: '',
         publicado: false
       });
-      fetchPosts(false);
     } catch (error) {
-      console.error('Erro ao atualizar post:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o post.",
-        variant: "destructive",
-      });
+      console.error('Erro no handleUpdatePost:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -183,51 +167,17 @@ export const BlogManager = () => {
     if (!confirm('Tem certeza que deseja excluir este post?')) return;
 
     try {
-      const { error } = await supabase
-        .from('blog_posts')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Post excluído!",
-        description: "O post foi excluído com sucesso.",
-      });
-
-      fetchPosts(false);
+      await deletePost(id);
     } catch (error) {
-      console.error('Erro ao excluir post:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível excluir o post.",
-        variant: "destructive",
-      });
+      console.error('Erro no handleDeletePost:', error);
     }
   };
 
   const togglePublished = async (post: BlogPost) => {
     try {
-      const { error } = await supabase
-        .from('blog_posts')
-        .update({ publicado: !post.publicado })
-        .eq('id', post.id);
-
-      if (error) throw error;
-
-      toast({
-        title: post.publicado ? "Post despublicado!" : "Post publicado!",
-        description: `O post foi ${post.publicado ? 'despublicado' : 'publicado'} com sucesso.`,
-      });
-
-      fetchPosts(false);
+      await updatePost(post.id, { publicado: !post.publicado });
     } catch (error) {
       console.error('Erro ao alterar status:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível alterar o status do post.",
-        variant: "destructive",
-      });
     }
   };
 
@@ -502,9 +452,17 @@ export const BlogManager = () => {
           <DialogFooter>
             <Button 
               onClick={editingPost ? handleUpdatePost : handleCreatePost}
+              disabled={submitting}
               className="pet-button-primary"
             >
-              {editingPost ? 'Salvar Alterações' : 'Criar Post'}
+              {submitting ? (
+                <>
+                  <LoadingSpinner size="sm" className="mr-2" />
+                  {editingPost ? 'Salvando...' : 'Criando...'}
+                </>
+              ) : (
+                editingPost ? 'Salvar Alterações' : 'Criar Post'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

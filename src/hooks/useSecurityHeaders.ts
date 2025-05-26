@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 
 export const useSecurityHeaders = () => {
   useEffect(() => {
@@ -9,10 +9,10 @@ export const useSecurityHeaders = () => {
     metaCSP.setAttribute('content', 
       "default-src 'self'; " +
       "script-src 'self' 'unsafe-inline' https://cdn.gpteng.co; " +
-      "style-src 'self' 'unsafe-inline'; " +
-      "img-src 'self' data: https:; " +
-      "font-src 'self' https:; " +
-      "connect-src 'self' https://srvthnemnmvpjntimgqt.supabase.co;"
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+      "img-src 'self' data: https: blob:; " +
+      "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com; " +
+      "connect-src 'self' https://srvthnemnmvpjntimgqt.supabase.co wss://srvthnemnmvpjntimgqt.supabase.co;"
     );
     document.head.appendChild(metaCSP);
 

@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -86,14 +86,37 @@ export const useBlog = () => {
     try {
       console.log('Criando post:', postData);
       
+      // Validação dos dados obrigatórios
+      if (!postData.titulo || !postData.conteudo || !postData.slug) {
+        throw new Error('Título, conteúdo e slug são obrigatórios');
+      }
+
+      // Preparar dados para inserção
+      const insertData = {
+        titulo: postData.titulo.trim(),
+        conteudo: postData.conteudo.trim(),
+        slug: postData.slug.trim(),
+        resumo: postData.resumo?.trim() || null,
+        imagem_url: postData.imagem_url?.trim() || null,
+        categoria: postData.categoria?.trim() || null,
+        autor: postData.autor?.trim() || null,
+        tags: postData.tags && postData.tags.length > 0 ? postData.tags : null,
+        publicado: Boolean(postData.publicado)
+      };
+
+      console.log('Dados preparados para inserção:', insertData);
+
       const { data, error } = await supabase
         .from('blog_posts')
-        .insert([postData])
+        .insert([insertData])
         .select()
         .single();
 
       if (error) {
-        console.error('Erro ao criar post:', error);
+        console.error('Erro detalhado ao criar post:', error);
+        if (error.code === '23505') {
+          throw new Error('Já existe um post com este slug. Escolha outro slug.');
+        }
         throw error;
       }
 
@@ -108,9 +131,10 @@ export const useBlog = () => {
       return data;
     } catch (error) {
       console.error('Erro ao criar post:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Não foi possível criar o post.';
       toast({
         title: "Erro",
-        description: "Não foi possível criar o post.",
+        description: errorMessage,
         variant: "destructive",
       });
       throw error;
@@ -185,6 +209,11 @@ export const useBlog = () => {
       throw error;
     }
   }, [toast, fetchPosts]);
+
+  // Carregar posts ao inicializar o hook
+  useEffect(() => {
+    fetchPosts(false);
+  }, [fetchPosts]);
 
   return {
     posts,
