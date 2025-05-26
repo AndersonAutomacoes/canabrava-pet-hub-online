@@ -7,6 +7,7 @@ import { Calendar, Clock, Eye, ArrowRight, Heart } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useToast } from '@/hooks/use-toast';
+import { Link } from 'react-router-dom';
 
 interface BlogPost {
   id: string;
@@ -195,10 +196,12 @@ const Blog = () => {
                       </div>
                     )}
                   </div>
-                  <Button variant="secondary" size="lg" className="bg-white text-green-600 hover:bg-gray-100">
-                    Ler Artigo Completo
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
+                  <Link to={`/blog/${featuredPost.slug}`}>
+                    <Button variant="secondary" size="lg" className="bg-white text-green-600 hover:bg-gray-100">
+                      Ler Artigo Completo
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
                 </CardHeader>
                 <div className="lg:p-12 p-8 flex items-center justify-center">
                   <div className="text-9xl opacity-20">
@@ -247,10 +250,12 @@ const Blog = () => {
               </CardContent>
               <CardFooter className="pt-0">
                 <div className="flex w-full space-x-2">
-                  <Button className="flex-1 bg-green-600 hover:bg-green-700">
-                    Ler Mais
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
+                  <Link to={`/blog/${post.slug}`} className="flex-1">
+                    <Button className="w-full bg-green-600 hover:bg-green-700">
+                      Ler Mais
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
                   <Button variant="outline" size="icon" className="hover:text-red-500">
                     <Heart className="w-4 h-4" />
                   </Button>
@@ -258,6 +263,16 @@ const Blog = () => {
               </CardFooter>
             </Card>
           ))}
+        </div>
+
+        {/* Ver todos os posts */}
+        <div className="text-center mt-12">
+          <Link to="/blog">
+            <Button variant="outline" size="lg" className="border-green-600 text-green-600 hover:bg-green-50">
+              Ver Todos os Posts
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </Link>
         </div>
 
         {/* Newsletter signup */}
