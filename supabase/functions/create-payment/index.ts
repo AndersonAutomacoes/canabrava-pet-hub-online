@@ -55,7 +55,15 @@ serve(async (req) => {
 
     logStep("Order found", { total: pedido.total, itemsCount: pedido.pedido_itens?.length });
 
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+    // Verificar se a chave secreta do Stripe está configurada
+    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeSecretKey) {
+      throw new Error("Stripe secret key not configured");
+    }
+
+    logStep("Stripe secret key found");
+
+    const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2023-10-16",
     });
 
