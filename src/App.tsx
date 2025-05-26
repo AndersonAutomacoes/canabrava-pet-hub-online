@@ -20,6 +20,7 @@ import NotFound from "./pages/NotFound";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import MeuPet from "./pages/MeuPet";
+import Contato from "./pages/Contato";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -53,6 +54,7 @@ const AppContent = () => {
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/:slug" element={<BlogPost />} />
                 <Route path="/meu-pet" element={<MeuPet />} />
+                <Route path="/contato" element={<Contato />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <LGPDConsent />

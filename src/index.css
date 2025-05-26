@@ -58,6 +58,10 @@
     --pet-white: rgb(255 255 255);
     --pet-teal: rgb(20 184 166);
     --pet-teal-light: rgb(240 253 250);
+    
+    /* Placeholder colors for low relief effect */
+    --placeholder-light: rgb(156 163 175);
+    --placeholder-dark: rgb(107 114 128);
   }
 
   .dark {
@@ -97,6 +101,9 @@
     --sidebar-accent-foreground: rgb(248 250 252);
     --sidebar-border: rgb(51 65 85);
     --sidebar-ring: rgb(34 197 94);
+    
+    --placeholder-light: rgb(107 114 128);
+    --placeholder-dark: rgb(75 85 99);
   }
 }
 
@@ -112,6 +119,33 @@
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-bold tracking-tight;
+  }
+
+  /* Enhanced placeholder styling for low relief effect */
+  ::placeholder {
+    color: var(--placeholder-light);
+    opacity: 0.65;
+    font-weight: 300;
+    transition: opacity 0.2s ease-in-out;
+  }
+
+  input:focus::placeholder,
+  textarea:focus::placeholder {
+    opacity: 0.4;
+    transition: opacity 0.2s ease-in-out;
+  }
+
+  /* Specific input styling for better placeholder visibility */
+  input[type="text"]::placeholder,
+  input[type="email"]::placeholder,
+  input[type="password"]::placeholder,
+  input[type="tel"]::placeholder,
+  input[type="search"]::placeholder,
+  textarea::placeholder,
+  select::placeholder {
+    color: var(--placeholder-light);
+    font-style: italic;
+    font-weight: 300;
   }
 
   .pet-gradient-bg {
@@ -199,6 +233,13 @@
 
   .pet-input {
     @apply flex h-12 w-full rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200;
+  }
+
+  /* Enhanced input styling with better placeholder support */
+  .pet-input::placeholder {
+    color: var(--placeholder-light);
+    font-weight: 300;
+    font-style: italic;
   }
 
   .pet-badge {
