@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -97,6 +96,18 @@ export const useBlog = () => {
         throw new Error('Usuário não autenticado');
       }
 
+      // Verificar se o usuário é administrador usando a nova função
+      const { data: isAdminResult, error: adminError } = await supabase.rpc('is_admin');
+      
+      if (adminError) {
+        console.error('Erro ao verificar status de admin:', adminError);
+        throw new Error('Erro ao verificar permissões de administrador');
+      }
+
+      if (!isAdminResult) {
+        throw new Error('Você não tem permissão para criar posts. Apenas administradores podem criar posts.');
+      }
+
       // Preparar dados para inserção
       const insertData = {
         titulo: postData.titulo.trim(),
@@ -122,9 +133,6 @@ export const useBlog = () => {
         console.error('Erro detalhado ao criar post:', error);
         if (error.code === '23505') {
           throw new Error('Já existe um post com este slug. Escolha outro slug.');
-        }
-        if (error.code === '42501') {
-          throw new Error('Você não tem permissão para criar posts. Verifique se você é um administrador.');
         }
         throw error;
       }
