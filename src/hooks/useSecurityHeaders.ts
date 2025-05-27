@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 
 export const useSecurityHeaders = () => {
   useEffect(() => {
-    // Content Security Policy
+    // Content Security Policy - permitindo acesso ao ViaCEP
     const metaCSP = document.createElement('meta');
     metaCSP.setAttribute('http-equiv', 'Content-Security-Policy');
     metaCSP.setAttribute('content', 
@@ -12,7 +12,7 @@ export const useSecurityHeaders = () => {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "img-src 'self' data: https: blob:; " +
       "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com; " +
-      "connect-src 'self' https://srvthnemnmvpjntimgqt.supabase.co wss://srvthnemnmvpjntimgqt.supabase.co;"
+      "connect-src 'self' https://srvthnemnmvpjntimgqt.supabase.co wss://srvthnemnmvpjntimgqt.supabase.co https://viacep.com.br;"
     );
     document.head.appendChild(metaCSP);
 

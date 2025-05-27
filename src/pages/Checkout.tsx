@@ -12,7 +12,7 @@ const Checkout = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
         <PageLayout
           title="Login Necessário"
           subtitle="Para finalizar sua compra de forma segura"
@@ -45,7 +45,7 @@ const Checkout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       <PageLayout
         title="Finalizar Compra"
         subtitle="Ambiente seguro e protegido para finalizar seu pedido"

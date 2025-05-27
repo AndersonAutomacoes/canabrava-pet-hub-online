@@ -59,8 +59,22 @@ export const CEPAutoComplete: React.FC<CEPAutoCompleteProps> = ({
 
     setLoading(true);
     try {
-      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      console.log('Buscando CEP:', cleanCep);
+      
+      // Usar proxy CORS para contornar problemas de CSP
+      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data: CEPData = await response.json();
+      console.log('Dados do CEP recebidos:', data);
 
       if (data.erro) {
         toast({
@@ -81,7 +95,7 @@ export const CEPAutoComplete: React.FC<CEPAutoCompleteProps> = ({
       console.error('Erro ao buscar CEP:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível buscar o endereço. Tente novamente.",
+        description: "Não foi possível buscar o endereço. Tente novamente ou preencha manualmente.",
         variant: "destructive",
       });
     } finally {
