@@ -67,7 +67,8 @@ serve(async (req) => {
       throw new Error("Cannot use publishable key. Please use secret key (starts with sk_)");
     }
 
-    logStep("Stripe secret key verified", { keyType: stripeSecretKey.substring(0, 3) });
+    // Log apenas os primeiros caracteres da chave para segurança
+    logStep("Stripe secret key verified", { keyPrefix: stripeSecretKey.substring(0, 7) });
 
     const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2023-10-16",
