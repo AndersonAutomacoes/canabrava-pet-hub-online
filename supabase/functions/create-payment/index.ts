@@ -61,7 +61,12 @@ serve(async (req) => {
       throw new Error("Stripe secret key not configured");
     }
 
-    logStep("Stripe secret key found");
+    // Verificar se não é uma chave pública
+    if (stripeSecretKey.startsWith("pk_")) {
+      throw new Error("Cannot use publishable key. Please use secret key (starts with sk_)");
+    }
+
+    logStep("Stripe secret key verified", { keyType: stripeSecretKey.substring(0, 3) });
 
     const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2023-10-16",
