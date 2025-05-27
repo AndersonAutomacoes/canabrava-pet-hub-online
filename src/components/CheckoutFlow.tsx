@@ -11,6 +11,7 @@ import { useCart } from '@/hooks/useCart';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { CEPAutoComplete } from '@/components/CEPAutoComplete';
 import FreteCalculator from './FreteCalculator';
 
 const CheckoutFlow = () => {
@@ -42,6 +43,16 @@ const CheckoutFlow = () => {
   const handleFreteCalculado = (valor: number, prazo: number) => {
     setFreteValor(valor);
     setFretePrazo(prazo);
+  };
+
+  const handleAddressComplete = (addressData: any) => {
+    setDeliveryAddress(prev => ({
+      ...prev,
+      cep: addressData.cep,
+      endereco: `${addressData.logradouro}, ${addressData.bairro}`,
+      cidade: addressData.localidade,
+      estado: addressData.uf
+    }));
   };
 
   const handleAddressSubmit = () => {
@@ -158,7 +169,7 @@ const CheckoutFlow = () => {
   if (step === 4) {
     return (
       <div className="max-w-2xl mx-auto">
-        <Card>
+        <Card className="bg-white shadow-lg">
           <CardContent className="text-center py-12">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
@@ -189,7 +200,6 @@ const CheckoutFlow = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* ... keep existing code (step indicator) */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
           {[1, 2, 3].map((stepNumber) => (
@@ -218,7 +228,7 @@ const CheckoutFlow = () => {
         <div className="lg:col-span-2">
           {step === 1 && (
             <div className="space-y-6">
-              <Card>
+              <Card className="bg-white shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <MapPin className="w-5 h-5" />
@@ -226,6 +236,11 @@ const CheckoutFlow = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <CEPAutoComplete 
+                    onAddressComplete={handleAddressComplete}
+                    initialCep={deliveryAddress.cep}
+                  />
+                  
                   <div>
                     <Label htmlFor="endereco">Endereço *</Label>
                     <Input
@@ -233,6 +248,7 @@ const CheckoutFlow = () => {
                       value={deliveryAddress.endereco}
                       onChange={(e) => setDeliveryAddress({...deliveryAddress, endereco: e.target.value})}
                       placeholder="Rua, número, bairro"
+                      className="bg-white border-slate-300 focus:border-green-500 focus:ring-green-500"
                     />
                   </div>
                   
@@ -243,6 +259,7 @@ const CheckoutFlow = () => {
                         id="cidade"
                         value={deliveryAddress.cidade}
                         onChange={(e) => setDeliveryAddress({...deliveryAddress, cidade: e.target.value})}
+                        className="bg-white border-slate-300 focus:border-green-500 focus:ring-green-500"
                       />
                     </div>
                     <div>
@@ -251,29 +268,20 @@ const CheckoutFlow = () => {
                         id="estado"
                         value={deliveryAddress.estado}
                         onChange={(e) => setDeliveryAddress({...deliveryAddress, estado: e.target.value})}
+                        className="bg-white border-slate-300 focus:border-green-500 focus:ring-green-500"
                       />
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="cep">CEP *</Label>
-                      <Input
-                        id="cep"
-                        value={deliveryAddress.cep}
-                        onChange={(e) => setDeliveryAddress({...deliveryAddress, cep: e.target.value})}
-                        placeholder="00000-000"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="complemento">Complemento</Label>
-                      <Input
-                        id="complemento"
-                        value={deliveryAddress.complemento}
-                        onChange={(e) => setDeliveryAddress({...deliveryAddress, complemento: e.target.value})}
-                        placeholder="Apt, casa, etc."
-                      />
-                    </div>
+                  <div>
+                    <Label htmlFor="complemento">Complemento</Label>
+                    <Input
+                      id="complemento"
+                      value={deliveryAddress.complemento}
+                      onChange={(e) => setDeliveryAddress({...deliveryAddress, complemento: e.target.value})}
+                      placeholder="Apt, casa, etc."
+                      className="bg-white border-slate-300 focus:border-green-500 focus:ring-green-500"
+                    />
                   </div>
 
                   <Button onClick={handleAddressSubmit} className="w-full bg-green-600 hover:bg-green-700">
@@ -290,9 +298,8 @@ const CheckoutFlow = () => {
             </div>
           )}
 
-          {/* ... keep existing code for steps 2 and 3 */}
           {step === 2 && (
-            <Card>
+            <Card className="bg-white shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <CreditCard className="w-5 h-5" />
@@ -301,10 +308,10 @@ const CheckoutFlow = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-white border-slate-300">
                     <SelectValue placeholder="Selecione o método de pagamento" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white border border-slate-300 shadow-lg z-50">
                     <SelectItem value="cartao_credito">Cartão de Crédito (Stripe)</SelectItem>
                     <SelectItem value="cartao_debito">Cartão de Débito (Stripe)</SelectItem>
                     <SelectItem value="pix">PIX</SelectItem>
@@ -329,6 +336,7 @@ const CheckoutFlow = () => {
                     onChange={(e) => setObservations(e.target.value)}
                     placeholder="Informações adicionais sobre a entrega..."
                     rows={3}
+                    className="bg-white border-slate-300 focus:border-green-500 focus:ring-green-500"
                   />
                 </div>
 
@@ -345,7 +353,7 @@ const CheckoutFlow = () => {
           )}
 
           {step === 3 && (
-            <Card>
+            <Card className="bg-white shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <CheckCircle className="w-5 h-5" />
@@ -417,9 +425,9 @@ const CheckoutFlow = () => {
           )}
         </div>
 
-        {/* Resumo do Pedido - Atualizado com frete */}
+        {/* Resumo do Pedido */}
         <div>
-          <Card>
+          <Card className="bg-white shadow-lg">
             <CardHeader>
               <CardTitle>Resumo do Pedido</CardTitle>
             </CardHeader>
