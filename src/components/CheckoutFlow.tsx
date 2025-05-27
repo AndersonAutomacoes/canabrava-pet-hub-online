@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -92,6 +93,23 @@ const CheckoutFlow = () => {
     setLoading(true);
     
     try {
+      console.log('Starting order creation process...');
+      
+      // Verificar se ainda temos uma sessão válida
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        console.error('No valid session found:', sessionError);
+        toast({
+          title: "Sessão expirada",
+          description: "Faça login novamente para continuar.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Valid session found, creating order...');
+
       // Criar pedido
       const subtotal = getCartTotal();
       const total = subtotal + freteValor;
@@ -109,7 +127,12 @@ const CheckoutFlow = () => {
         .select()
         .single();
 
-      if (pedidoError) throw pedidoError;
+      if (pedidoError) {
+        console.error('Error creating order:', pedidoError);
+        throw pedidoError;
+      }
+
+      console.log('Order created:', pedido.id);
 
       // Criar itens do pedido
       const pedidoItens = cartItems.map(item => ({
@@ -124,17 +147,45 @@ const CheckoutFlow = () => {
         .from('pedido_itens')
         .insert(pedidoItens);
 
-      if (itensError) throw itensError;
+      if (itensError) {
+        console.error('Error creating order items:', itensError);
+        throw itensError;
+      }
 
+      console.log('Order items created');
       setCurrentOrderId(pedido.id);
 
       // Se for pagamento com cartão, processar via Stripe
       if (paymentMethod === 'cartao_credito' || paymentMethod === 'cartao_debito') {
+        console.log('Processing Stripe payment for order:', pedido.id);
+        
+        // Garantir que temos o token mais recente
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        if (!currentSession?.access_token) {
+          throw new Error('Token de acesso não disponível');
+        }
+
+        console.log('Calling create-payment function...');
+        
         const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-payment', {
-          body: { pedidoId: pedido.id }
+          body: { pedidoId: pedido.id },
+          headers: {
+            Authorization: `Bearer ${currentSession.access_token}`,
+          }
         });
 
-        if (paymentError) throw paymentError;
+        if (paymentError) {
+          console.error('Payment function error:', paymentError);
+          throw new Error(`Erro no pagamento: ${paymentError.message}`);
+        }
+
+        if (!paymentData?.url) {
+          console.error('No payment URL returned:', paymentData);
+          throw new Error('URL de pagamento não foi gerada');
+        }
+
+        console.log('Payment URL generated, redirecting...');
 
         // Redirecionar para Stripe Checkout em nova aba
         window.open(paymentData.url, '_blank');
@@ -158,7 +209,7 @@ const CheckoutFlow = () => {
       console.error('Erro ao criar pedido:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível processar seu pedido. Tente novamente.",
+        description: error instanceof Error ? error.message : "Não foi possível processar seu pedido. Tente novamente.",
         variant: "destructive",
       });
     } finally {
