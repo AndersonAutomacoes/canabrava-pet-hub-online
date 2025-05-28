@@ -1,72 +1,52 @@
+
 import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Search, Plus, Edit, Trash2 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Plus, Edit2, Trash2, Save, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
-interface Service {
+interface Servico {
   cdservico: number;
   dsservico: string;
   vrservico: number | null;
-  cdempresa: number;
   cdservicopai: number | null;
+  cdempresa: number;
 }
 
 export const ServicesManager = () => {
-  const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showForm, setShowForm] = useState(false);
-  const [editingService, setEditingService] = useState<Service | null>(null);
+  const [servicos, setServicos] = useState<Servico[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({
     dsservico: '',
-    vrservico: 0,
-    cdempresa: 1
+    vrservico: '',
+    cdservicopai: ''
   });
   const { toast } = useToast();
 
-  const fetchServices = async () => {
-    setLoading(true);
+  useEffect(() => {
+    fetchServicos();
+  }, []);
+
+  const fetchServicos = async () => {
     try {
-      console.log('Iniciando busca de serviços...');
-      
-      // Tentativa mais simples de buscar dados
       const { data, error } = await supabase
         .from('servico')
         .select('*')
         .order('dsservico');
 
-      console.log('Resultado da query:', { data, error });
-
-      if (error) {
-        console.error('Erro detalhado:', error);
-        toast({
-          title: "Erro",
-          description: `Erro ao carregar serviços: ${error.message}`,
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      console.log('Serviços carregados com sucesso:', data);
-      setServices(data || []);
-      
-      toast({
-        title: "Sucesso",
-        description: `${(data || []).length} serviços carregados.`,
-      });
-      
+      if (error) throw error;
+      setServicos(data || []);
     } catch (error) {
-      console.error('Erro inesperado:', error);
+      console.error('Erro ao carregar serviços:', error);
       toast({
-        title: "Erro",
-        description: "Erro inesperado ao carregar os serviços.",
+        title: "Erro ao carregar serviços",
+        description: "Não foi possível carregar a lista de serviços.",
         variant: "destructive",
       });
     } finally {
@@ -74,323 +54,292 @@ export const ServicesManager = () => {
     }
   };
 
-  useEffect(() => {
-    fetchServices();
-  }, []);
-
-  const handleCreateService = async () => {
+  const handleSave = async (servico: Servico) => {
     try {
-      if (!formData.dsservico.trim()) {
-        toast({
-          title: "Campo obrigatório",
-          description: "O nome do serviço é obrigatório.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log('Criando serviço:', formData);
-      
-      const serviceData = {
-        dsservico: formData.dsservico.trim(),
-        vrservico: formData.vrservico > 0 ? formData.vrservico : null,
-        cdempresa: formData.cdempresa,
-        cdservicopai: null
-      };
-
-      console.log('Dados para inserção:', serviceData);
-
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('servico')
-        .insert([serviceData])
-        .select();
+        .update({
+          dsservico: servico.dsservico,
+          vrservico: servico.vrservico,
+          cdservicopai: servico.cdservicopai
+        })
+        .eq('cdservico', servico.cdservico);
 
-      console.log('Resultado da inserção:', { data, error });
-
-      if (error) {
-        console.error('Erro ao criar serviço:', error);
-        toast({
-          title: "Erro",
-          description: `Erro ao criar serviço: ${error.message}`,
-          variant: "destructive",
-        });
-        return;
-      }
+      if (error) throw error;
 
       toast({
-        title: "Serviço criado!",
-        description: "O serviço foi criado com sucesso.",
-      });
-
-      setShowForm(false);
-      setFormData({ dsservico: '', vrservico: 0, cdempresa: 1 });
-      await fetchServices();
-    } catch (error) {
-      console.error('Erro inesperado ao criar serviço:', error);
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao criar o serviço.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleUpdateService = async () => {
-    if (!editingService) return;
-
-    try {
-      if (!formData.dsservico.trim()) {
-        toast({
-          title: "Campo obrigatório",
-          description: "O nome do serviço é obrigatório.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log('Atualizando serviço:', editingService.cdservico, formData);
-      
-      const updateData = {
-        dsservico: formData.dsservico.trim(),
-        vrservico: formData.vrservico > 0 ? formData.vrservico : null,
-        cdempresa: formData.cdempresa
-      };
-
-      const { data, error } = await supabase
-        .from('servico')
-        .update(updateData)
-        .eq('cdservico', editingService.cdservico)
-        .select();
-
-      console.log('Resultado da atualização:', { data, error });
-
-      if (error) {
-        console.error('Erro ao atualizar serviço:', error);
-        toast({
-          title: "Erro",
-          description: `Erro ao atualizar serviço: ${error.message}`,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      toast({
-        title: "Serviço atualizado!",
+        title: "Serviço atualizado",
         description: "O serviço foi atualizado com sucesso.",
+        className: "bg-green-50 border-green-200 text-green-800",
       });
 
-      setShowForm(false);
-      setEditingService(null);
-      setFormData({ dsservico: '', vrservico: 0, cdempresa: 1 });
-      await fetchServices();
+      setEditingId(null);
+      fetchServicos();
     } catch (error) {
-      console.error('Erro inesperado ao atualizar serviço:', error);
+      console.error('Erro ao atualizar serviço:', error);
       toast({
-        title: "Erro",
-        description: "Erro inesperado ao atualizar o serviço.",
+        title: "Erro ao atualizar serviço",
+        description: "Não foi possível atualizar o serviço.",
         variant: "destructive",
       });
     }
   };
 
-  const handleDeleteService = async (cdservico: number) => {
+  const handleDelete = async (id: number) => {
     if (!confirm('Tem certeza que deseja excluir este serviço?')) return;
 
     try {
-      console.log('Excluindo serviço:', cdservico);
-      
       const { error } = await supabase
         .from('servico')
         .delete()
-        .eq('cdservico', cdservico);
+        .eq('cdservico', id);
 
-      console.log('Resultado da exclusão:', { error });
-
-      if (error) {
-        console.error('Erro ao excluir serviço:', error);
-        toast({
-          title: "Erro",
-          description: `Erro ao excluir serviço: ${error.message}`,
-          variant: "destructive",
-        });
-        return;
-      }
+      if (error) throw error;
 
       toast({
-        title: "Serviço excluído!",
+        title: "Serviço excluído",
         description: "O serviço foi excluído com sucesso.",
+        className: "bg-green-50 border-green-200 text-green-800",
       });
 
-      await fetchServices();
+      fetchServicos();
     } catch (error) {
-      console.error('Erro inesperado ao excluir serviço:', error);
+      console.error('Erro ao excluir serviço:', error);
       toast({
-        title: "Erro",
-        description: "Erro inesperado ao excluir o serviço.",
+        title: "Erro ao excluir serviço",
+        description: "Não foi possível excluir o serviço.",
         variant: "destructive",
       });
     }
   };
 
-  const openEditForm = (service: Service) => {
-    setEditingService(service);
-    setFormData({
-      dsservico: service.dsservico,
-      vrservico: service.vrservico || 0,
-      cdempresa: service.cdempresa
-    });
-    setShowForm(true);
+  const handleAddService = async () => {
+    try {
+      const { error } = await supabase
+        .from('servico')
+        .insert([{
+          dsservico: formData.dsservico,
+          vrservico: formData.vrservico ? parseFloat(formData.vrservico) : null,
+          cdservicopai: formData.cdservicopai ? parseInt(formData.cdservicopai) : null,
+          cdempresa: 1
+        }]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Serviço adicionado",
+        description: "O novo serviço foi adicionado com sucesso.",
+        className: "bg-green-50 border-green-200 text-green-800",
+      });
+
+      setFormData({ dsservico: '', vrservico: '', cdservicopai: '' });
+      setShowAddForm(false);
+      fetchServicos();
+    } catch (error) {
+      console.error('Erro ao adicionar serviço:', error);
+      toast({
+        title: "Erro ao adicionar serviço",
+        description: "Não foi possível adicionar o serviço.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const openCreateForm = () => {
-    setEditingService(null);
-    setFormData({ dsservico: '', vrservico: 0, cdempresa: 1 });
-    setShowForm(true);
-  };
-
-  const filteredServices = services.filter(service =>
-    service.dsservico.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  if (loading) {
+    return (
+      <Card className="pet-card border-0 shadow-medium">
+        <CardContent className="p-6">
+          <div className="text-center">Carregando serviços...</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <div className="space-y-6 bg-white">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-blue-800">Gerenciar Serviços</h2>
-        <Button onClick={openCreateForm} className="bg-blue-600 hover:bg-blue-700 text-white">
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Serviço
-        </Button>
-      </div>
-
-      <Card className="bg-white border-blue-200 shadow-lg">
-        <CardHeader className="bg-white border-b border-blue-200">
-          <div className="flex items-center space-x-2">
-            <Search className="w-4 h-4 text-blue-500" />
-            <Input
-              placeholder="Buscar serviços..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm bg-white border-blue-300 focus:border-blue-500 focus:ring-blue-500"
-            />
+    <div className="space-y-6">
+      <Card className="pet-card border-0 shadow-medium">
+        <CardHeader className="bg-gradient-to-r from-blue-500 to-green-500 text-white rounded-t-lg">
+          <div className="flex justify-between items-center">
+            <CardTitle>Gerenciar Serviços</CardTitle>
+            <Button
+              onClick={() => setShowAddForm(!showAddForm)}
+              variant="secondary"
+              size="sm"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Adicionar Serviço
+            </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-0 bg-white">
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <LoadingSpinner />
+        <CardContent className="p-6">
+          {showAddForm && (
+            <div className="mb-6 p-4 border rounded-lg bg-gray-50">
+              <h3 className="text-lg font-semibold mb-4">Adicionar Novo Serviço</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                  <Label htmlFor="new-dsservico">Nome do Serviço</Label>
+                  <Input
+                    id="new-dsservico"
+                    value={formData.dsservico}
+                    onChange={(e) => setFormData({ ...formData, dsservico: e.target.value })}
+                    placeholder="Ex: Banho e Tosa"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="new-vrservico">Valor (R$)</Label>
+                  <Input
+                    id="new-vrservico"
+                    type="number"
+                    step="0.01"
+                    value={formData.vrservico}
+                    onChange={(e) => setFormData({ ...formData, vrservico: e.target.value })}
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="new-cdservicopai">Serviço Pai (ID)</Label>
+                  <Input
+                    id="new-cdservicopai"
+                    type="number"
+                    value={formData.cdservicopai}
+                    onChange={(e) => setFormData({ ...formData, cdservicopai: e.target.value })}
+                    placeholder="Opcional"
+                  />
+                </div>
+              </div>
+              <div className="flex space-x-2">
+                <Button onClick={handleAddService} className="pet-button-primary">
+                  <Save className="w-4 h-4 mr-2" />
+                  Salvar
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setShowAddForm(false);
+                    setFormData({ dsservico: '', vrservico: '', cdservicopai: '' });
+                  }}
+                  variant="outline"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Cancelar
+                </Button>
+              </div>
             </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-blue-100 border-b border-blue-200 hover:bg-blue-100">
-                  <TableHead className="text-blue-700 font-semibold">Código</TableHead>
-                  <TableHead className="text-blue-700 font-semibold">Serviço</TableHead>
-                  <TableHead className="text-blue-700 font-semibold">Valor</TableHead>
-                  <TableHead className="text-blue-700 font-semibold">Empresa</TableHead>
-                  <TableHead className="text-blue-700 font-semibold">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredServices.map((service) => (
-                  <TableRow key={service.cdservico} className="border-b border-blue-100 hover:bg-blue-50">
-                    <TableCell className="text-blue-700">{service.cdservico}</TableCell>
-                    <TableCell className="font-medium text-blue-800">{service.dsservico}</TableCell>
-                    <TableCell className="text-blue-700 font-medium">
-                      {service.vrservico ? `R$ ${service.vrservico.toFixed(2)}` : 'N/A'}
-                    </TableCell>
-                    <TableCell className="text-blue-700">{service.cdempresa}</TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => openEditForm(service)}
-                          className="border-blue-300 text-blue-700 hover:bg-blue-50"
+          )}
+
+          <div className="space-y-4">
+            {servicos.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                Nenhum serviço encontrado.
+              </div>
+            ) : (
+              servicos.map((servico) => (
+                <div key={servico.cdservico} className="border rounded-lg p-4 bg-white">
+                  {editingId === servico.cdservico ? (
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div>
+                        <Label>Nome do Serviço</Label>
+                        <Input
+                          value={servico.dsservico}
+                          onChange={(e) => {
+                            const updated = servicos.map(s => 
+                              s.cdservico === servico.cdservico 
+                                ? { ...s, dsservico: e.target.value }
+                                : s
+                            );
+                            setServicos(updated);
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <Label>Valor (R$)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={servico.vrservico || ''}
+                          onChange={(e) => {
+                            const updated = servicos.map(s => 
+                              s.cdservico === servico.cdservico 
+                                ? { ...s, vrservico: e.target.value ? parseFloat(e.target.value) : null }
+                                : s
+                            );
+                            setServicos(updated);
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <Label>Serviço Pai</Label>
+                        <Input
+                          type="number"
+                          value={servico.cdservicopai || ''}
+                          onChange={(e) => {
+                            const updated = servicos.map(s => 
+                              s.cdservico === servico.cdservico 
+                                ? { ...s, cdservicopai: e.target.value ? parseInt(e.target.value) : null }
+                                : s
+                            );
+                            setServicos(updated);
+                          }}
+                        />
+                      </div>
+                      <div className="flex items-end space-x-2">
+                        <Button
+                          onClick={() => handleSave(servico)}
+                          size="sm"
+                          className="pet-button-primary"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Save className="w-4 h-4" />
                         </Button>
-                        <Button 
-                          variant="destructive" 
-                          size="sm" 
-                          onClick={() => handleDeleteService(service.cdservico)}
-                          className="bg-red-600 hover:bg-red-700"
+                        <Button
+                          onClick={() => setEditingId(null)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between items-center">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
+                        <div>
+                          <span className="font-medium">{servico.dsservico}</span>
+                          <p className="text-sm text-gray-600">ID: {servico.cdservico}</p>
+                        </div>
+                        <div>
+                          <span className="text-green-600 font-semibold">
+                            {servico.vrservico ? `R$ ${servico.vrservico.toFixed(2)}` : 'Não informado'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">
+                            Pai: {servico.cdservicopai || 'Nenhum'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          onClick={() => setEditingId(servico.cdservico)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          onClick={() => handleDelete(servico.cdservico)}
+                          variant="destructive"
+                          size="sm"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filteredServices.length === 0 && !loading && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                      {searchTerm ? 'Nenhum serviço encontrado com esse termo' : 'Nenhum serviço cadastrado'}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
         </CardContent>
       </Card>
-
-      <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="sm:max-w-[425px] bg-white border border-gray-200 shadow-xl">
-          <DialogHeader className="border-b border-gray-200 pb-4">
-            <DialogTitle className="text-blue-800 text-xl font-bold">
-              {editingService ? 'Editar Serviço' : 'Novo Serviço'}
-            </DialogTitle>
-            <DialogDescription className="text-gray-600">
-              {editingService ? 'Edite as informações do serviço' : 'Preencha as informações do novo serviço'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right text-gray-700 font-semibold">
-                Nome *
-              </Label>
-              <Input
-                id="name"
-                value={formData.dsservico}
-                onChange={(e) => setFormData(prev => ({ ...prev, dsservico: e.target.value }))}
-                className="col-span-3 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-800"
-                placeholder="Nome do serviço"
-                required
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="price" className="text-right text-gray-700 font-semibold">
-                Valor (R$)
-              </Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.vrservico}
-                onChange={(e) => setFormData(prev => ({ ...prev, vrservico: parseFloat(e.target.value) || 0 }))}
-                className="col-span-3 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-800"
-                placeholder="0.00"
-              />
-            </div>
-          </div>
-          <DialogFooter className="pt-4 border-t border-gray-200">
-            <Button 
-              variant="outline"
-              onClick={() => setShowForm(false)}
-              className="mr-2 border-gray-300 text-gray-700 hover:bg-gray-50 bg-white"
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={editingService ? handleUpdateService : handleCreateService}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              {editingService ? 'Salvar Alterações' : 'Criar Serviço'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
