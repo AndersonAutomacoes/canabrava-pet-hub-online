@@ -335,31 +335,31 @@ export const ServicesManager = () => {
       </Card>
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="sm:max-w-[425px] bg-blue-50 border border-blue-300">
-          <DialogHeader>
-            <DialogTitle className="text-blue-800">
+        <DialogContent className="sm:max-w-[425px] bg-white border border-gray-200 shadow-xl">
+          <DialogHeader className="border-b border-gray-200 pb-4">
+            <DialogTitle className="text-blue-800 text-xl font-bold">
               {editingService ? 'Editar Serviço' : 'Novo Serviço'}
             </DialogTitle>
-            <DialogDescription className="text-blue-600">
+            <DialogDescription className="text-gray-600">
               {editingService ? 'Edite as informações do serviço' : 'Preencha as informações do novo serviço'}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right text-blue-700">
+              <Label htmlFor="name" className="text-right text-gray-700 font-semibold">
                 Nome *
               </Label>
               <Input
                 id="name"
                 value={formData.dsservico}
                 onChange={(e) => setFormData(prev => ({ ...prev, dsservico: e.target.value }))}
-                className="col-span-3 bg-white border-blue-300 focus:border-blue-500 focus:ring-blue-500 text-blue-800"
+                className="col-span-3 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-800"
                 placeholder="Nome do serviço"
                 required
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="price" className="text-right text-blue-700">
+              <Label htmlFor="price" className="text-right text-gray-700 font-semibold">
                 Valor (R$)
               </Label>
               <Input
@@ -369,16 +369,16 @@ export const ServicesManager = () => {
                 min="0"
                 value={formData.vrservico}
                 onChange={(e) => setFormData(prev => ({ ...prev, vrservico: parseFloat(e.target.value) || 0 }))}
-                className="col-span-3 bg-white border-blue-300 focus:border-blue-500 focus:ring-blue-500 text-blue-800"
+                className="col-span-3 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-gray-800"
                 placeholder="0.00"
               />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="pt-4 border-t border-gray-200">
             <Button 
               variant="outline"
               onClick={() => setShowForm(false)}
-              className="mr-2"
+              className="mr-2 border-gray-300 text-gray-700 hover:bg-gray-50 bg-white"
             >
               Cancelar
             </Button>

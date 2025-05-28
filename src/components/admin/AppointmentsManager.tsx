@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -456,9 +455,9 @@ export const AppointmentsManager = () => {
       </Card>
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="sm:max-w-[500px] bg-white border-0 shadow-xl">
-          <DialogHeader className="text-center border-b border-blue-100 pb-4">
-            <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+        <DialogContent className="sm:max-w-[500px] bg-white border border-gray-200 shadow-xl">
+          <DialogHeader className="text-center border-b border-gray-200 pb-4">
+            <DialogTitle className="text-2xl font-bold text-gray-800">
               Novo Agendamento
             </DialogTitle>
             <DialogDescription className="text-gray-600 font-medium">
@@ -467,7 +466,7 @@ export const AppointmentsManager = () => {
           </DialogHeader>
           <div className="space-y-6 py-6">
             <div className="space-y-2">
-              <Label htmlFor="datetime" className="text-sm font-semibold text-blue-700">
+              <Label htmlFor="datetime" className="text-sm font-semibold text-gray-700">
                 Data/Hora *
               </Label>
               <Input
@@ -475,21 +474,21 @@ export const AppointmentsManager = () => {
                 type="datetime-local"
                 value={formData.dtStart}
                 onChange={(e) => setFormData(prev => ({ ...prev, dtStart: e.target.value }))}
-                className="w-full border-blue-200 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg text-gray-800 bg-white"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="service" className="text-sm font-semibold text-blue-700">
+              <Label htmlFor="service" className="text-sm font-semibold text-gray-700">
                 Serviço *
               </Label>
               <Select value={formData.cdservico} onValueChange={(value) => setFormData(prev => ({ ...prev, cdservico: value }))}>
-                <SelectTrigger className="w-full border-blue-200 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
+                <SelectTrigger className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg text-gray-800 bg-white">
                   <SelectValue placeholder="Selecione um serviço" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border border-blue-200 shadow-lg rounded-lg">
+                <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
                   {services.map((service) => (
-                    <SelectItem key={service.cdservico} value={service.cdservico.toString()} className="hover:bg-blue-50">
+                    <SelectItem key={service.cdservico} value={service.cdservico.toString()} className="hover:bg-gray-50 text-gray-800">
                       {service.dsservico}
                     </SelectItem>
                   ))}
@@ -499,16 +498,16 @@ export const AppointmentsManager = () => {
 
             {isAdmin && clientes.length > 0 && (
               <div className="space-y-2">
-                <Label htmlFor="cliente" className="text-sm font-semibold text-blue-700">
+                <Label htmlFor="cliente" className="text-sm font-semibold text-gray-700">
                   Cliente
                 </Label>
                 <Select value={formData.cdCliente} onValueChange={(value) => setFormData(prev => ({ ...prev, cdCliente: value, cdPet: '' }))}>
-                  <SelectTrigger className="w-full border-blue-200 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
+                  <SelectTrigger className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg text-gray-800 bg-white">
                     <SelectValue placeholder="Selecione um cliente" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border border-blue-200 shadow-lg rounded-lg">
+                  <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
                     {clientes.map((cliente) => (
-                      <SelectItem key={cliente.cdCliente} value={cliente.cdCliente.toString()} className="hover:bg-blue-50">
+                      <SelectItem key={cliente.cdCliente} value={cliente.cdCliente.toString()} className="hover:bg-gray-50 text-gray-800">
                         {cliente.dsNome || `Cliente ${cliente.cdCliente}`}
                       </SelectItem>
                     ))}
@@ -519,16 +518,16 @@ export const AppointmentsManager = () => {
 
             {getAvailablePets().length > 0 && (
               <div className="space-y-2">
-                <Label htmlFor="pet" className="text-sm font-semibold text-blue-700">
+                <Label htmlFor="pet" className="text-sm font-semibold text-gray-700">
                   Pet
                 </Label>
                 <Select value={formData.cdPet} onValueChange={(value) => setFormData(prev => ({ ...prev, cdPet: value }))}>
-                  <SelectTrigger className="w-full border-blue-200 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
+                  <SelectTrigger className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg text-gray-800 bg-white">
                     <SelectValue placeholder="Selecione um pet" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border border-blue-200 shadow-lg rounded-lg">
+                  <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
                     {getAvailablePets().map((pet) => (
-                      <SelectItem key={pet.cdPet} value={pet.cdPet.toString()} className="hover:bg-blue-50">
+                      <SelectItem key={pet.cdPet} value={pet.cdPet.toString()} className="hover:bg-gray-50 text-gray-800">
                         {pet.nmPet}
                       </SelectItem>
                     ))}
@@ -537,17 +536,17 @@ export const AppointmentsManager = () => {
               </div>
             )}
           </div>
-          <DialogFooter className="flex space-x-3 pt-6 border-t border-blue-100">
+          <DialogFooter className="flex space-x-3 pt-6 border-t border-gray-200">
             <Button 
               variant="outline" 
               onClick={() => setShowForm(false)}
-              className="flex-1 border-blue-200 text-blue-700 hover:bg-blue-50 font-medium"
+              className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50 font-medium bg-white"
             >
               Cancelar
             </Button>
             <Button 
               onClick={handleCreateAppointment} 
-              className="flex-1 bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white font-medium shadow-lg"
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-lg"
             >
               Criar Agendamento
             </Button>

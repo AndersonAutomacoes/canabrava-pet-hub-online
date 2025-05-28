@@ -1,140 +1,99 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Calendar, ShoppingCart, Heart } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
+import { Heart, Shield, Clock, Star } from 'lucide-react';
 
 const Hero = () => {
-  const navigate = useNavigate();
-
-  const handleScheduleService = () => {
-    navigate('/agendamento');
-  };
-
-  const handleViewProducts = () => {
-    navigate('/produtos');
-  };
-
-  const scrollToServices = () => {
-    const servicesSection = document.getElementById('services');
-    if (servicesSection) {
-      servicesSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   return (
-    <section id="home" className="relative py-20 px-4 overflow-hidden">
-      <div className="container mx-auto">
+    <div className="relative overflow-hidden bg-gradient-to-br from-orange-50 to-orange-100 py-20">
+      <div className="container mx-auto px-4">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Content */}
           <div className="space-y-8">
             <div className="space-y-4">
-              <h1 className="text-5xl md:text-6xl font-bold text-gray-800 leading-tight">
-                Cuidamos do seu
-                <span className="text-green-600 block">melhor amigo</span>
+              <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+                Cuidado completo para seu{' '}
+                <span className="text-orange-600">melhor amigo</span>
               </h1>
               <p className="text-xl text-gray-600 leading-relaxed">
-                No PetShop Canabrava, oferecemos serviços completos de cuidado para pets, 
-                produtos de qualidade e muito amor para seu companheiro de quatro patas.
+                Serviços profissionais de pet shop com produtos de qualidade premium. 
+                Agende online e garante o melhor para seu animal de estimação.
               </p>
             </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-green-600">500+</div>
-                <div className="text-sm text-gray-600">Pets Atendidos</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-orange-500">15</div>
-                <div className="text-sm text-gray-600">Anos de Experiência</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-500">4.9</div>
-                <div className="text-sm text-gray-600">Avaliação</div>
-              </div>
-            </div>
-
-            {/* CTA Buttons */}
+            
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button 
-                size="lg" 
-                className="bg-green-600 hover:bg-green-700 text-white flex items-center space-x-2"
-                onClick={handleScheduleService}
+              <Button
+                size="lg"
+                className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-4 text-lg font-semibold"
+                onClick={() => window.location.href = '/agendamento'}
               >
-                <Calendar className="w-5 h-5" />
-                <span>Agendar Serviço</span>
+                Agendar Serviço
               </Button>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="border-orange-500 text-orange-500 hover:bg-orange-50 flex items-center space-x-2"
-                onClick={handleViewProducts}
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white px-8 py-4 text-lg font-semibold"
+                onClick={() => window.location.href = '/produtos'}
               >
-                <ShoppingCart className="w-5 h-5" />
-                <span>Ver Produtos</span>
+                Ver Produtos
               </Button>
             </div>
 
-            {/* Trust indicators */}
-            <div className="flex items-center space-x-6 pt-4">
-              <div className="flex items-center space-x-2">
-                <Heart className="w-5 h-5 text-red-500" />
-                <span className="text-sm text-gray-600">Atendimento com amor</span>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-8">
+              <div className="text-center">
+                <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Heart className="w-6 h-6 text-orange-600" />
+                </div>
+                <h3 className="font-semibold text-gray-900">Cuidado</h3>
+                <p className="text-sm text-gray-600">Amoroso</p>
               </div>
-              <div className="flex items-center space-x-2">
-                <span className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">✓</span>
-                <span className="text-sm text-gray-600">Profissionais qualificados</span>
+              <div className="text-center">
+                <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Shield className="w-6 h-6 text-orange-600" />
+                </div>
+                <h3 className="font-semibold text-gray-900">Segurança</h3>
+                <p className="text-sm text-gray-600">Total</p>
+              </div>
+              <div className="text-center">
+                <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Clock className="w-6 h-6 text-orange-600" />
+                </div>
+                <h3 className="font-semibold text-gray-900">Rapidez</h3>
+                <p className="text-sm text-gray-600">no Atendimento</p>
+              </div>
+              <div className="text-center">
+                <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Star className="w-6 h-6 text-orange-600" />
+                </div>
+                <h3 className="font-semibold text-gray-900">Qualidade</h3>
+                <p className="text-sm text-gray-600">Premium</p>
               </div>
             </div>
           </div>
 
-          {/* Hero Image */}
           <div className="relative">
-            <div className="bg-gradient-to-br from-green-400 to-blue-500 rounded-3xl p-8 transform rotate-3 shadow-2xl">
-              <div className="bg-white rounded-2xl p-6 transform -rotate-3">
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center text-3xl">
-                      🐕
+            <Card className="relative overflow-hidden border-0 shadow-2xl bg-white">
+              <CardContent className="p-0">
+                <div className="aspect-square bg-gradient-to-br from-orange-200 to-orange-300 flex items-center justify-center">
+                  <div className="text-center space-y-4">
+                    <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mx-auto shadow-lg">
+                      <span className="text-6xl">🐕</span>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-800">Max</h3>
-                      <p className="text-gray-600">Golden Retriever</p>
-                    </div>
+                    <h3 className="text-2xl font-bold text-gray-800">Seu Pet Merece o Melhor</h3>
+                    <p className="text-gray-600 px-6">
+                      Profissionais especializados e produtos de alta qualidade
+                    </p>
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Último banho:</span>
-                      <span className="text-green-600 font-semibold">Há 2 semanas</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Próxima consulta:</span>
-                      <span className="text-blue-600 font-semibold">15/01/2025</span>
-                    </div>
-                  </div>
-                  <Button 
-                    size="sm" 
-                    className="w-full bg-green-600 hover:bg-green-700"
-                    onClick={scrollToServices}
-                  >
-                    Ver Serviços
-                  </Button>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
             
-            {/* Floating elements */}
-            <div className="absolute -top-4 -right-4 w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center text-2xl animate-bounce">
-              🦴
-            </div>
-            <div className="absolute -bottom-4 -left-4 w-10 h-10 bg-pink-400 rounded-full flex items-center justify-center text-xl animate-pulse">
-              ❤️
-            </div>
+            <div className="absolute -top-4 -right-4 w-24 h-24 bg-orange-400 rounded-full opacity-20"></div>
+            <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-orange-300 rounded-full opacity-30"></div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 
