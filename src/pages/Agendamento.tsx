@@ -2,20 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Calendar } from '@/components/ui/calendar';
-import { Checkbox } from '@/components/ui/checkbox';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, Clock, ArrowRight, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import PetSelection from '@/components/PetSelection';
+import { ProgressSteps } from '@/components/agendamento/ProgressSteps';
+import { ServiceSelection } from '@/components/agendamento/ServiceSelection';
+import { PetSelectionStep } from '@/components/agendamento/PetSelectionStep';
+import { DateTimeSelection } from '@/components/agendamento/DateTimeSelection';
+import { ConfirmationStep } from '@/components/agendamento/ConfirmationStep';
+import { SuccessStep } from '@/components/agendamento/SuccessStep';
 
 interface Servico {
   cdservico: number;
@@ -32,15 +29,8 @@ const Agendamento = () => {
   const [selectedPet, setSelectedPet] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [loading, setLoading] = useState(false);
-  const [agendamentoId, setAgendamentoId] = useState<string>('');
   const { user } = useAuth();
   const { toast } = useToast();
-
-  const timeSlots = [
-    '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
-    '11:00', '11:30', '14:00', '14:30', '15:00', '15:30',
-    '16:00', '16:30', '17:00', '17:30'
-  ];
 
   useEffect(() => {
     if (user) {
@@ -166,7 +156,6 @@ const Agendamento = () => {
         startDateTime.setHours(startDateTime.getHours() + 1);
       }
 
-      setAgendamentoId(agendamentos[0].cdAgendamento.toString());
       setStep(5);
 
       toast({
@@ -192,27 +181,6 @@ const Agendamento = () => {
         ? prev.filter(id => id !== servicoId)
         : [...prev, servicoId]
     );
-  };
-
-  const formatDisplayDate = (date: Date, time: string) => {
-    const [hours, minutes] = time.split(':');
-    const dateTime = new Date(date);
-    dateTime.setHours(parseInt(hours), parseInt(minutes));
-    return format(dateTime, "dd-MM-yyyy HH:mm", { locale: ptBR });
-  };
-
-  const getSelectedServicosNames = () => {
-    return selectedServicos.map(id => {
-      const servico = servicos.find(s => s.cdservico.toString() === id);
-      return servico?.dsservico || '';
-    }).join(', ');
-  };
-
-  const getTotalValue = () => {
-    return selectedServicos.reduce((total, id) => {
-      const servico = servicos.find(s => s.cdservico.toString() === id);
-      return total + (servico?.vrservico || 0);
-    }, 0);
   };
 
   if (!user) {
@@ -242,35 +210,7 @@ const Agendamento = () => {
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
         <Header />
         <div className="container mx-auto px-4 py-8">
-          <Card className="max-w-2xl mx-auto pet-card border-0 shadow-xl">
-            <CardContent className="text-center py-12 bg-gradient-to-br from-green-50 to-blue-50">
-              <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                <CheckCircle className="w-10 h-10 text-white" />
-              </div>
-              <h2 className="text-3xl font-bold text-gray-800 mb-4">
-                Agendamentos Confirmados!
-              </h2>
-              <p className="text-gray-600 mb-6 text-lg">
-                Seus {selectedServicos.length} agendamento(s) foram criados com sucesso. 
-                Você receberá uma confirmação por e-mail em breve.
-              </p>
-              <div className="space-y-3">
-                <Button 
-                  onClick={() => window.location.href = '/agendamento'}
-                  className="pet-button-primary mr-4 h-12 px-8"
-                >
-                  Novo Agendamento
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => window.location.href = '/'}
-                  className="h-12 px-8"
-                >
-                  Voltar ao Início
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <SuccessStep selectedServicosCount={selectedServicos.length} />
         </div>
         <Footer />
       </div>
@@ -292,262 +232,51 @@ const Agendamento = () => {
             </p>
           </div>
 
-          {/* Progress Steps */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between max-w-2xl mx-auto">
-              {[1, 2, 3, 4].map((stepNumber) => (
-                <div key={stepNumber} className="flex items-center">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
-                    step >= stepNumber 
-                      ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white shadow-lg' 
-                      : 'bg-gray-200 text-gray-600'
-                  }`}>
-                    {stepNumber}
-                  </div>
-                  <span className={`ml-2 text-sm font-medium ${step >= stepNumber ? 'text-green-600' : 'text-gray-600'}`}>
-                    {stepNumber === 1 && 'Serviços'}
-                    {stepNumber === 2 && 'Pet'}
-                    {stepNumber === 3 && 'Data/Hora'}
-                    {stepNumber === 4 && 'Confirmação'}
-                  </span>
-                  {stepNumber < 4 && (
-                    <ArrowRight className={`w-4 h-4 mx-4 ${
-                      step > stepNumber ? 'text-green-600' : 'text-gray-400'
-                    }`} />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+          <ProgressSteps currentStep={step} />
 
-          {/* Step 1: Selecionar Serviços */}
           {step === 1 && (
-            <Card className="pet-card border-0 shadow-xl">
-              <CardHeader className="bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-t-lg">
-                <CardTitle className="text-xl">Selecione os Serviços</CardTitle>
-                <p className="text-green-100">Você pode selecionar múltiplos serviços</p>
-              </CardHeader>
-              <CardContent className="space-y-4 p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {servicos.map((servico) => (
-                    <Card 
-                      key={servico.cdservico}
-                      className={`cursor-pointer transition-all duration-300 border-2 ${
-                        selectedServicos.includes(servico.cdservico.toString())
-                          ? 'border-green-500 bg-green-50 shadow-lg scale-105' 
-                          : 'border-gray-200 hover:border-green-300 hover:shadow-md'
-                      }`}
-                      onClick={() => handleServicoToggle(servico.cdservico.toString())}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-gray-800 mb-2">{servico.dsservico}</h3>
-                            {servico.vrservico && (
-                              <p className="text-green-600 font-bold text-lg">
-                                R$ {servico.vrservico.toFixed(2)}
-                              </p>
-                            )}
-                          </div>
-                          <Checkbox
-                            checked={selectedServicos.includes(servico.cdservico.toString())}
-                            onChange={() => handleServicoToggle(servico.cdservico.toString())}
-                            className="mt-1"
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-                
-                {selectedServicos.length > 0 && (
-                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                    <h4 className="font-semibold text-green-800 mb-2">Serviços Selecionados:</h4>
-                    <p className="text-green-700">{getSelectedServicosNames()}</p>
-                    <p className="text-green-800 font-bold mt-2">
-                      Total: R$ {getTotalValue().toFixed(2)}
-                    </p>
-                  </div>
-                )}
-                
-                <Button 
-                  onClick={handleServiceNext} 
-                  className="w-full pet-button-primary h-12 text-base"
-                  disabled={selectedServicos.length === 0}
-                >
-                  <ArrowRight className="w-5 h-5 mr-2" />
-                  Continuar
-                </Button>
-              </CardContent>
-            </Card>
+            <ServiceSelection
+              servicos={servicos}
+              selectedServicos={selectedServicos}
+              onServiceToggle={handleServicoToggle}
+              onNext={handleServiceNext}
+            />
           )}
 
-          {/* Step 2: Selecionar Pet */}
           {step === 2 && (
-            <div className="space-y-6">
-              <Card className="pet-card border-0 shadow-xl">
-                <CardHeader className="bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-t-lg">
-                  <CardTitle className="text-xl">Selecione o Pet</CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <PetSelection selectedPet={selectedPet} onPetSelect={setSelectedPet} />
-                </CardContent>
-              </Card>
-              <div className="flex space-x-4">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setStep(1)} 
-                  className="flex-1 h-12"
-                >
-                  Voltar
-                </Button>
-                <Button 
-                  onClick={handlePetNext} 
-                  className="flex-1 pet-button-primary h-12"
-                  disabled={!selectedPet}
-                >
-                  <ArrowRight className="w-5 h-5 mr-2" />
-                  Continuar
-                </Button>
-              </div>
-            </div>
+            <PetSelectionStep
+              selectedPet={selectedPet}
+              onPetSelect={setSelectedPet}
+              onNext={handlePetNext}
+              onBack={() => setStep(1)}
+            />
           )}
 
-          {/* Step 3: Selecionar Data e Hora */}
           {step === 3 && (
-            <Card className="pet-card border-0 shadow-xl">
-              <CardHeader className="bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-t-lg">
-                <CardTitle className="text-xl">Selecione Data e Horário</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6 p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label className="text-base font-semibold mb-4 block text-gray-700">Data</Label>
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={setSelectedDate}
-                      locale={ptBR}
-                      disabled={(date) => date < new Date() || date.getDay() === 0}
-                      className="rounded-md border border-green-200 bg-white"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-base font-semibold mb-4 block text-gray-700">Horário</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {timeSlots.map((time) => (
-                        <Button
-                          key={time}
-                          variant={selectedTime === time ? "default" : "outline"}
-                          onClick={() => setSelectedTime(time)}
-                          className={`h-12 ${selectedTime === time ? "pet-button-primary" : "border-green-200 hover:border-green-400"}`}
-                        >
-                          <Clock className="w-4 h-4 mr-2" />
-                          {time}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="observacoes" className="text-gray-700 font-medium">Observações (opcional)</Label>
-                  <Textarea
-                    id="observacoes"
-                    placeholder="Observações especiais sobre o atendimento..."
-                    value={observacoes}
-                    onChange={(e) => setObservacoes(e.target.value)}
-                    rows={3}
-                    className="mt-2 border-green-200 focus:border-green-500 focus:ring-green-500"
-                  />
-                </div>
-
-                <div className="flex space-x-4">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setStep(2)} 
-                    className="flex-1 h-12"
-                  >
-                    Voltar
-                  </Button>
-                  <Button 
-                    onClick={handleDateTimeNext} 
-                    className="flex-1 pet-button-primary h-12"
-                    disabled={!selectedDate || !selectedTime}
-                  >
-                    <ArrowRight className="w-5 h-5 mr-2" />
-                    Continuar
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <DateTimeSelection
+              selectedDate={selectedDate}
+              selectedTime={selectedTime}
+              observacoes={observacoes}
+              onDateSelect={setSelectedDate}
+              onTimeSelect={setSelectedTime}
+              onObservacoesChange={setObservacoes}
+              onNext={handleDateTimeNext}
+              onBack={() => setStep(2)}
+            />
           )}
 
-          {/* Step 4: Confirmação */}
           {step === 4 && (
-            <Card className="pet-card border-0 shadow-xl">
-              <CardHeader className="bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-t-lg">
-                <CardTitle className="text-xl">Confirmar Agendamentos</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6 p-6">
-                <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-xl border border-green-200">
-                  <h3 className="font-semibold text-green-800 text-lg mb-4">Resumo dos Agendamentos</h3>
-                  
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="font-medium text-gray-700">Serviços:</span>
-                      <span className="text-gray-800">{getSelectedServicosNames()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium text-gray-700">Pet:</span>
-                      <span className="text-gray-800">Pet #{selectedPet}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium text-gray-700">Data e Hora:</span>
-                      <span className="text-gray-800">{selectedDate && selectedTime && formatDisplayDate(selectedDate, selectedTime)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium text-gray-700">Total:</span>
-                      <span className="text-gray-800 font-bold">R$ {getTotalValue().toFixed(2)}</span>
-                    </div>
-                    {observacoes && (
-                      <div className="border-t border-green-200 pt-3">
-                        <span className="font-medium text-gray-700">Observações:</span>
-                        <p className="text-gray-800 mt-1">{observacoes}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex space-x-4">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setStep(3)} 
-                    className="flex-1 h-12"
-                  >
-                    Voltar
-                  </Button>
-                  <Button 
-                    onClick={handleSubmit} 
-                    className="flex-1 pet-button-primary h-12"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <>
-                        <div className="w-5 h-5 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        Agendando...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="w-5 h-5 mr-2" />
-                        Confirmar Agendamentos
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <ConfirmationStep
+              servicos={servicos}
+              selectedServicos={selectedServicos}
+              selectedPet={selectedPet}
+              selectedDate={selectedDate}
+              selectedTime={selectedTime}
+              observacoes={observacoes}
+              loading={loading}
+              onSubmit={handleSubmit}
+              onBack={() => setStep(3)}
+            />
           )}
         </div>
       </main>
