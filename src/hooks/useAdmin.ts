@@ -19,6 +19,7 @@ export const useAdmin = () => {
       try {
         console.log('Verificando status de admin para usuário:', user.id);
         
+        // Usar a função RPC que foi corrigida
         const { data: isAdminResult, error } = await supabase.rpc('get_user_admin_status');
         
         if (error) {
@@ -26,7 +27,7 @@ export const useAdmin = () => {
           setIsAdmin(false);
         } else {
           console.log('Status de admin (RPC):', isAdminResult);
-          setIsAdmin(isAdminResult);
+          setIsAdmin(Boolean(isAdminResult));
         }
       } catch (error) {
         console.error('Erro ao verificar admin:', error);

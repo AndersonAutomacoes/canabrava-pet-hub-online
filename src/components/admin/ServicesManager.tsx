@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Plus, Edit2, Trash2, Save, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -35,12 +34,18 @@ export const ServicesManager = () => {
 
   const fetchServicos = async () => {
     try {
+      console.log('Carregando serviços...');
       const { data, error } = await supabase
         .from('servico')
         .select('*')
         .order('dsservico');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao carregar serviços:', error);
+        throw error;
+      }
+      
+      console.log('Serviços carregados:', data);
       setServicos(data || []);
     } catch (error) {
       console.error('Erro ao carregar serviços:', error);
@@ -56,6 +61,7 @@ export const ServicesManager = () => {
 
   const handleSave = async (servico: Servico) => {
     try {
+      console.log('Salvando serviço:', servico);
       const { error } = await supabase
         .from('servico')
         .update({
@@ -65,7 +71,10 @@ export const ServicesManager = () => {
         })
         .eq('cdservico', servico.cdservico);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao atualizar serviço:', error);
+        throw error;
+      }
 
       toast({
         title: "Serviço atualizado",
@@ -89,12 +98,16 @@ export const ServicesManager = () => {
     if (!confirm('Tem certeza que deseja excluir este serviço?')) return;
 
     try {
+      console.log('Excluindo serviço:', id);
       const { error } = await supabase
         .from('servico')
         .delete()
         .eq('cdservico', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao excluir serviço:', error);
+        throw error;
+      }
 
       toast({
         title: "Serviço excluído",
@@ -115,6 +128,7 @@ export const ServicesManager = () => {
 
   const handleAddService = async () => {
     try {
+      console.log('Adicionando novo serviço:', formData);
       const { error } = await supabase
         .from('servico')
         .insert([{
@@ -124,7 +138,10 @@ export const ServicesManager = () => {
           cdempresa: 1
         }]);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao adicionar serviço:', error);
+        throw error;
+      }
 
       toast({
         title: "Serviço adicionado",
