@@ -12,6 +12,8 @@ import { Search, Calendar, CheckCircle, XCircle, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { useAdmin } from '@/hooks/useAdmin';
+import { useUserClient } from '@/hooks/useUserClient';
 
 interface Appointment {
   cdAgendamento: number;
@@ -58,10 +60,12 @@ export const AppointmentsManager = () => {
     cdPet: ''
   });
   const { toast } = useToast();
+  const { isAdmin } = useAdmin();
+  const { currentClient } = useUserClient();
 
   useEffect(() => {
     fetchInitialData();
-  }, []);
+  }, [isAdmin, currentClient]);
 
   const fetchInitialData = async () => {
     setLoading(true);
@@ -83,19 +87,28 @@ export const AppointmentsManager = () => {
     try {
       console.log('Buscando clientes...');
       
-      const { data, error } = await supabase
-        .from('Clientes')
-        .select('cdCliente, dsNome, nuTelefoneWhatsapp')
-        .order('dsNome');
-
-      console.log('Resultado da busca de clientes:', { data, error });
-
-      if (error) {
-        console.error('Erro ao buscar clientes:', error);
+      // Se não é admin, usar apenas o cliente atual
+      if (!isAdmin && currentClient) {
+        setClientes([currentClient]);
         return;
       }
-      
-      setClientes(data || []);
+
+      // Se é admin, buscar todos os clientes
+      if (isAdmin) {
+        const { data, error } = await supabase
+          .from('Clientes')
+          .select('cdCliente, dsNome, nuTelefoneWhatsapp')
+          .order('dsNome');
+
+        console.log('Resultado da busca de clientes (admin):', { data, error });
+
+        if (error) {
+          console.error('Erro ao buscar clientes:', error);
+          return;
+        }
+        
+        setClientes(data || []);
+      }
     } catch (error) {
       console.error('Erro inesperado ao buscar clientes:', error);
     }
@@ -127,7 +140,6 @@ export const AppointmentsManager = () => {
     try {
       console.log('Buscando agendamentos...');
       
-      // Buscar agendamentos primeiro
       const { data: appointmentsData, error: appointmentsError } = await supabase
         .from('Agendamento')
         .select('*')
@@ -143,22 +155,18 @@ export const AppointmentsManager = () => {
         return;
       }
 
-      // Buscar serviços separadamente
-      const { data: servicesData, error: servicesError } = await supabase
+      const { data: servicesData } = await supabase
         .from('servico')
         .select('cdservico, dsservico');
 
-      // Buscar clientes separadamente
-      const { data: clientesData, error: clientesError } = await supabase
+      const { data: clientesData } = await supabase
         .from('Clientes')
         .select('cdCliente, dsNome, nuTelefoneWhatsapp');
 
-      // Buscar pets separadamente
-      const { data: petsData, error: petsError } = await supabase
+      const { data: petsData } = await supabase
         .from('Pet')
         .select('cdPet, nmPet, cdCliente');
 
-      // Mapear os dados manualmente
       const mappedAppointments = (appointmentsData || []).map(appointment => {
         const service = servicesData?.find(s => s.cdservico === appointment.cdServico);
         const cliente = clientesData?.find(c => c.cdCliente === appointment.cdCliente);
@@ -212,67 +220,6 @@ export const AppointmentsManager = () => {
     }
   };
 
-  const ensureRequiredData = async () => {
-    let clienteId = null;
-    let petId = null;
-
-    if (clientes.length === 0) {
-      try {
-        console.log('Criando cliente padrão...');
-        
-        const { data: newCliente, error: clienteError } = await supabase
-          .from('Clientes')
-          .insert({
-            dsNome: 'Cliente Padrão',
-            nuTelefoneWhatsapp: '(11) 99999-9999',
-            cdEmpresa: 1
-          })
-          .select()
-          .single();
-
-        if (clienteError) throw clienteError;
-        
-        setClientes([newCliente]);
-        clienteId = newCliente.cdCliente;
-        console.log('Cliente padrão criado:', newCliente);
-      } catch (error) {
-        console.error('Erro ao criar cliente padrão:', error);
-        throw new Error('Não foi possível criar cliente padrão');
-      }
-    } else {
-      clienteId = formData.cdCliente ? parseInt(formData.cdCliente) : clientes[0].cdCliente;
-    }
-
-    if (pets.length === 0) {
-      try {
-        console.log('Criando pet padrão...');
-        
-        const { data: newPet, error: petError } = await supabase
-          .from('Pet')
-          .insert({
-            cdCliente: clienteId,
-            nmPet: 'Pet Padrão',
-            dsPorte: 'MEDIO'
-          })
-          .select()
-          .single();
-
-        if (petError) throw petError;
-        
-        setPets([newPet]);
-        petId = newPet.cdPet;
-        console.log('Pet padrão criado:', newPet);
-      } catch (error) {
-        console.error('Erro ao criar pet padrão:', error);
-        throw new Error('Não foi possível criar pet padrão');
-      }
-    } else {
-      petId = formData.cdPet ? parseInt(formData.cdPet) : pets.filter(pet => pet.cdCliente === clienteId)[0]?.cdPet || pets[0].cdPet;
-    }
-
-    return { clienteId, petId };
-  };
-
   const handleCreateAppointment = async () => {
     try {
       if (!formData.dtStart || !formData.cdservico) {
@@ -286,7 +233,32 @@ export const AppointmentsManager = () => {
 
       console.log('Criando agendamento:', formData);
 
-      const { clienteId, petId } = await ensureRequiredData();
+      // Usar cliente atual se não for admin
+      const clienteId = isAdmin 
+        ? (formData.cdCliente ? parseInt(formData.cdCliente) : clientes[0]?.cdCliente)
+        : currentClient?.cdCliente;
+
+      if (!clienteId) {
+        toast({
+          title: "Erro",
+          description: "Cliente não identificado.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Usar pet selecionado ou primeiro pet disponível do cliente
+      const availablePets = pets.filter(pet => pet.cdCliente === clienteId);
+      const petId = formData.cdPet ? parseInt(formData.cdPet) : availablePets[0]?.cdPet;
+
+      if (!petId) {
+        toast({
+          title: "Erro",
+          description: "Nenhum pet disponível para este cliente.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       const startDateTime = new Date(formData.dtStart);
       const endDateTime = new Date(startDateTime);
@@ -338,7 +310,7 @@ export const AppointmentsManager = () => {
       console.error('Erro inesperado ao criar agendamento:', error);
       toast({
         title: "Erro",
-        description: error instanceof Error ? error.message : "Não foi possível criar o agendamento.",
+        description: "Não foi possível criar o agendamento.",
         variant: "destructive",
       });
     }
@@ -348,7 +320,7 @@ export const AppointmentsManager = () => {
     setFormData({
       dtStart: '',
       cdservico: '',
-      cdCliente: '',
+      cdCliente: currentClient ? currentClient.cdCliente.toString() : '',
       cdPet: ''
     });
     setShowForm(true);
@@ -366,6 +338,10 @@ export const AppointmentsManager = () => {
   };
 
   const getAvailablePets = () => {
+    if (!isAdmin && currentClient) {
+      return pets.filter(pet => pet.cdCliente === currentClient.cdCliente);
+    }
+    
     if (!formData.cdCliente) return pets;
     return pets.filter(pet => pet.cdCliente === parseInt(formData.cdCliente));
   };
@@ -408,9 +384,9 @@ export const AppointmentsManager = () => {
                 <TableRow className="bg-gradient-to-r from-blue-50 to-green-50 border-b border-blue-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-green-50">
                   <TableHead className="text-blue-700 font-semibold">Data/Hora</TableHead>
                   <TableHead className="text-blue-700 font-semibold">Pet</TableHead>
-                  <TableHead className="text-blue-700 font-semibold">Cliente</TableHead>
+                  {isAdmin && <TableHead className="text-blue-700 font-semibold">Cliente</TableHead>}
                   <TableHead className="text-blue-700 font-semibold">Serviço</TableHead>
-                  <TableHead className="text-blue-700 font-semibold">Telefone</TableHead>
+                  {isAdmin && <TableHead className="text-blue-700 font-semibold">Telefone</TableHead>}
                   <TableHead className="text-blue-700 font-semibold">Status</TableHead>
                   <TableHead className="text-blue-700 font-semibold">Ações</TableHead>
                 </TableRow>
@@ -424,11 +400,15 @@ export const AppointmentsManager = () => {
                     <TableCell className="font-semibold text-blue-800">
                       {appointment.nmPet || 'N/A'}
                     </TableCell>
-                    <TableCell className="text-slate-700">
-                      {appointment.dsNomeCliente || 'N/A'}
-                    </TableCell>
+                    {isAdmin && (
+                      <TableCell className="text-slate-700">
+                        {appointment.dsNomeCliente || 'N/A'}
+                      </TableCell>
+                    )}
                     <TableCell className="text-slate-700">{appointment.dsServico || 'N/A'}</TableCell>
-                    <TableCell className="text-slate-700">{appointment.nuTelefoneWhatsapp || 'N/A'}</TableCell>
+                    {isAdmin && (
+                      <TableCell className="text-slate-700">{appointment.nuTelefoneWhatsapp || 'N/A'}</TableCell>
+                    )}
                     <TableCell>
                       <Badge 
                         variant={appointment.flComparecimento ? "default" : "secondary"} 
@@ -449,20 +429,22 @@ export const AppointmentsManager = () => {
                         >
                           <CheckCircle className="w-4 h-4" />
                         </Button>
-                        <Button 
-                          variant="destructive" 
-                          size="sm" 
-                          className="bg-red-500 hover:bg-red-600"
-                        >
-                          <XCircle className="w-4 h-4" />
-                        </Button>
+                        {isAdmin && (
+                          <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            className="bg-red-500 hover:bg-red-600"
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
                 ))}
                 {filteredAppointments.length === 0 && !loading && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={isAdmin ? 7 : 5} className="text-center py-8 text-gray-500">
                       {searchTerm ? 'Nenhum agendamento encontrado com esse termo' : 'Nenhum agendamento cadastrado'}
                     </TableCell>
                   </TableRow>
@@ -515,7 +497,7 @@ export const AppointmentsManager = () => {
               </Select>
             </div>
 
-            {clientes.length > 0 && (
+            {isAdmin && clientes.length > 0 && (
               <div className="space-y-2">
                 <Label htmlFor="cliente" className="text-sm font-semibold text-blue-700">
                   Cliente

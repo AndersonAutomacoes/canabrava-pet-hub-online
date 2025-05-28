@@ -1,11 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
+import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarIcon, Clock, ArrowRight, CheckCircle } from 'lucide-react';
@@ -27,7 +28,7 @@ const Agendamento = () => {
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState('');
-  const [selectedServico, setSelectedServico] = useState('');
+  const [selectedServicos, setSelectedServicos] = useState<string[]>([]);
   const [selectedPet, setSelectedPet] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [loading, setLoading] = useState(false);
@@ -62,10 +63,10 @@ const Agendamento = () => {
   };
 
   const handleServiceNext = () => {
-    if (!selectedServico) {
+    if (selectedServicos.length === 0) {
       toast({
-        title: "Selecione um serviço",
-        description: "Por favor, escolha o serviço desejado.",
+        title: "Selecione pelo menos um serviço",
+        description: "Por favor, escolha pelo menos um serviço desejado.",
         variant: "destructive",
       });
       return;
@@ -98,7 +99,7 @@ const Agendamento = () => {
   };
 
   const handleSubmit = async () => {
-    if (!user || !selectedDate || !selectedTime || !selectedServico || !selectedPet) {
+    if (!user || !selectedDate || !selectedTime || selectedServicos.length === 0 || !selectedPet) {
       toast({
         title: "Campos obrigatórios",
         description: "Por favor, preencha todos os campos obrigatórios.",
@@ -110,34 +111,67 @@ const Agendamento = () => {
     setLoading(true);
 
     try {
+      // Buscar ou criar cliente
+      let clienteId;
+      const { data: clienteData } = await supabase
+        .from('Clientes')
+        .select('cdCliente')
+        .eq('nuTelefoneWhatsapp', user.phone || user.id)
+        .single();
+
+      if (clienteData) {
+        clienteId = clienteData.cdCliente;
+      } else {
+        const { data: newCliente, error: clienteError } = await supabase
+          .from('Clientes')
+          .insert({
+            dsNome: user.email?.split('@')[0] || 'Cliente',
+            nuTelefoneWhatsapp: user.phone || user.id,
+            cdEmpresa: 1
+          })
+          .select()
+          .single();
+
+        if (clienteError) throw clienteError;
+        clienteId = newCliente.cdCliente;
+      }
+
       const [hours, minutes] = selectedTime.split(':');
       const startDateTime = new Date(selectedDate);
       startDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
       
-      const endDateTime = new Date(startDateTime);
-      endDateTime.setHours(startDateTime.getHours() + 1);
+      // Criar agendamentos para cada serviço selecionado
+      const agendamentos = [];
+      for (const servicoId of selectedServicos) {
+        const endDateTime = new Date(startDateTime);
+        endDateTime.setHours(startDateTime.getHours() + 1);
 
-      const { data, error } = await supabase
-        .from('Agendamento')
-        .insert({
-          cdEmpresa: 1,
-          cdCliente: 1,
-          cdPet: parseInt(selectedPet),
-          cdServico: parseInt(selectedServico),
-          dtStart: startDateTime.toISOString(),
-          dtEnd: endDateTime.toISOString(),
-        })
-        .select()
-        .single();
+        const { data, error } = await supabase
+          .from('Agendamento')
+          .insert({
+            cdEmpresa: 1,
+            cdCliente: clienteId,
+            cdPet: parseInt(selectedPet),
+            cdServico: parseInt(servicoId),
+            dtStart: startDateTime.toISOString(),
+            dtEnd: endDateTime.toISOString(),
+          })
+          .select()
+          .single();
 
-      if (error) throw error;
+        if (error) throw error;
+        agendamentos.push(data);
 
-      setAgendamentoId(data.cdAgendamento.toString());
+        // Incrementar horário para próximo serviço (se houver)
+        startDateTime.setHours(startDateTime.getHours() + 1);
+      }
+
+      setAgendamentoId(agendamentos[0].cdAgendamento.toString());
       setStep(5);
 
       toast({
-        title: "Agendamento realizado!",
-        description: "Seu agendamento foi criado com sucesso.",
+        title: "Agendamentos realizados!",
+        description: `${selectedServicos.length} agendamento(s) criado(s) com sucesso.`,
       });
 
     } catch (error) {
@@ -152,11 +186,33 @@ const Agendamento = () => {
     }
   };
 
+  const handleServicoToggle = (servicoId: string) => {
+    setSelectedServicos(prev => 
+      prev.includes(servicoId)
+        ? prev.filter(id => id !== servicoId)
+        : [...prev, servicoId]
+    );
+  };
+
   const formatDisplayDate = (date: Date, time: string) => {
     const [hours, minutes] = time.split(':');
     const dateTime = new Date(date);
     dateTime.setHours(parseInt(hours), parseInt(minutes));
     return format(dateTime, "dd-MM-yyyy HH:mm", { locale: ptBR });
+  };
+
+  const getSelectedServicosNames = () => {
+    return selectedServicos.map(id => {
+      const servico = servicos.find(s => s.cdservico.toString() === id);
+      return servico?.dsservico || '';
+    }).join(', ');
+  };
+
+  const getTotalValue = () => {
+    return selectedServicos.reduce((total, id) => {
+      const servico = servicos.find(s => s.cdservico.toString() === id);
+      return total + (servico?.vrservico || 0);
+    }, 0);
   };
 
   if (!user) {
@@ -192,10 +248,10 @@ const Agendamento = () => {
                 <CheckCircle className="w-10 h-10 text-white" />
               </div>
               <h2 className="text-3xl font-bold text-gray-800 mb-4">
-                Agendamento Confirmado!
+                Agendamentos Confirmados!
               </h2>
               <p className="text-gray-600 mb-6 text-lg">
-                Seu agendamento #{agendamentoId} foi criado com sucesso. 
+                Seus {selectedServicos.length} agendamento(s) foram criados com sucesso. 
                 Você receberá uma confirmação por e-mail em breve.
               </p>
               <div className="space-y-3">
@@ -229,7 +285,7 @@ const Agendamento = () => {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold gradient-text mb-2">
-              Agendar Serviço
+              Agendar Serviços
             </h1>
             <p className="text-gray-600 text-lg">
               Cuidado profissional para seu pet em poucos cliques
@@ -249,7 +305,7 @@ const Agendamento = () => {
                     {stepNumber}
                   </div>
                   <span className={`ml-2 text-sm font-medium ${step >= stepNumber ? 'text-green-600' : 'text-gray-600'}`}>
-                    {stepNumber === 1 && 'Serviço'}
+                    {stepNumber === 1 && 'Serviços'}
                     {stepNumber === 2 && 'Pet'}
                     {stepNumber === 3 && 'Data/Hora'}
                     {stepNumber === 4 && 'Confirmação'}
@@ -264,11 +320,12 @@ const Agendamento = () => {
             </div>
           </div>
 
-          {/* Step 1: Selecionar Serviço */}
+          {/* Step 1: Selecionar Serviços */}
           {step === 1 && (
             <Card className="pet-card border-0 shadow-xl">
               <CardHeader className="bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-t-lg">
-                <CardTitle className="text-xl">Selecione o Serviço</CardTitle>
+                <CardTitle className="text-xl">Selecione os Serviços</CardTitle>
+                <p className="text-green-100">Você pode selecionar múltiplos serviços</p>
               </CardHeader>
               <CardContent className="space-y-4 p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -276,27 +333,47 @@ const Agendamento = () => {
                     <Card 
                       key={servico.cdservico}
                       className={`cursor-pointer transition-all duration-300 border-2 ${
-                        selectedServico === servico.cdservico.toString() 
+                        selectedServicos.includes(servico.cdservico.toString())
                           ? 'border-green-500 bg-green-50 shadow-lg scale-105' 
                           : 'border-gray-200 hover:border-green-300 hover:shadow-md'
                       }`}
-                      onClick={() => setSelectedServico(servico.cdservico.toString())}
+                      onClick={() => handleServicoToggle(servico.cdservico.toString())}
                     >
                       <CardContent className="p-4">
-                        <h3 className="font-semibold text-gray-800 mb-2">{servico.dsservico}</h3>
-                        {servico.vrservico && (
-                          <p className="text-green-600 font-bold text-lg">
-                            R$ {servico.vrservico.toFixed(2)}
-                          </p>
-                        )}
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-800 mb-2">{servico.dsservico}</h3>
+                            {servico.vrservico && (
+                              <p className="text-green-600 font-bold text-lg">
+                                R$ {servico.vrservico.toFixed(2)}
+                              </p>
+                            )}
+                          </div>
+                          <Checkbox
+                            checked={selectedServicos.includes(servico.cdservico.toString())}
+                            onChange={() => handleServicoToggle(servico.cdservico.toString())}
+                            className="mt-1"
+                          />
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
                 </div>
+                
+                {selectedServicos.length > 0 && (
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <h4 className="font-semibold text-green-800 mb-2">Serviços Selecionados:</h4>
+                    <p className="text-green-700">{getSelectedServicosNames()}</p>
+                    <p className="text-green-800 font-bold mt-2">
+                      Total: R$ {getTotalValue().toFixed(2)}
+                    </p>
+                  </div>
+                )}
+                
                 <Button 
                   onClick={handleServiceNext} 
                   className="w-full pet-button-primary h-12 text-base"
-                  disabled={!selectedServico}
+                  disabled={selectedServicos.length === 0}
                 >
                   <ArrowRight className="w-5 h-5 mr-2" />
                   Continuar
@@ -411,16 +488,16 @@ const Agendamento = () => {
           {step === 4 && (
             <Card className="pet-card border-0 shadow-xl">
               <CardHeader className="bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-t-lg">
-                <CardTitle className="text-xl">Confirmar Agendamento</CardTitle>
+                <CardTitle className="text-xl">Confirmar Agendamentos</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6 p-6">
                 <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-xl border border-green-200">
-                  <h3 className="font-semibold text-green-800 text-lg mb-4">Resumo do Agendamento</h3>
+                  <h3 className="font-semibold text-green-800 text-lg mb-4">Resumo dos Agendamentos</h3>
                   
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="font-medium text-gray-700">Serviço:</span>
-                      <span className="text-gray-800">{servicos.find(s => s.cdservico.toString() === selectedServico)?.dsservico}</span>
+                      <span className="font-medium text-gray-700">Serviços:</span>
+                      <span className="text-gray-800">{getSelectedServicosNames()}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium text-gray-700">Pet:</span>
@@ -429,6 +506,10 @@ const Agendamento = () => {
                     <div className="flex justify-between">
                       <span className="font-medium text-gray-700">Data e Hora:</span>
                       <span className="text-gray-800">{selectedDate && selectedTime && formatDisplayDate(selectedDate, selectedTime)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-700">Total:</span>
+                      <span className="text-gray-800 font-bold">R$ {getTotalValue().toFixed(2)}</span>
                     </div>
                     {observacoes && (
                       <div className="border-t border-green-200 pt-3">
@@ -460,7 +541,7 @@ const Agendamento = () => {
                     ) : (
                       <>
                         <CheckCircle className="w-5 h-5 mr-2" />
-                        Confirmar Agendamento
+                        Confirmar Agendamentos
                       </>
                     )}
                   </Button>
