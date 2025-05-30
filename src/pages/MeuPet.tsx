@@ -4,7 +4,8 @@ import { PageLayout } from '@/components/layout/PageLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Heart, Activity, Scissors, Calendar as CalendarIcon } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar, Heart, Activity, Scissors, Calendar as CalendarIcon, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDate, formatDateTime } from '@/utils/dateFormatters';
@@ -32,6 +33,7 @@ interface Agendamento {
 const MeuPet = () => {
   const [pets, setPets] = useState<Pet[]>([]);
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
+  const [selectedPetId, setSelectedPetId] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
@@ -154,8 +156,13 @@ const MeuPet = () => {
     );
   }
 
-  const agendamentosRealizados = agendamentos.filter(a => a.flComparecimento).length;
-  const proximosAgendamentos = agendamentos.filter(a => !a.flComparecimento).length;
+  // Filtrar agendamentos por pet selecionado
+  const filteredAgendamentos = selectedPetId === 'all' 
+    ? agendamentos 
+    : agendamentos.filter(a => a.cdPet.toString() === selectedPetId);
+
+  const agendamentosRealizados = filteredAgendamentos.filter(a => a.flComparecimento).length;
+  const proximosAgendamentos = filteredAgendamentos.filter(a => !a.flComparecimento && new Date(a.dtStart) > new Date()).length;
 
   return (
     <PageLayout
@@ -167,6 +174,18 @@ const MeuPet = () => {
       containerSize="lg"
     >
       <div className="space-y-8">
+        {/* Botão Voltar */}
+        <div className="flex justify-start">
+          <Button
+            variant="outline"
+            onClick={() => window.location.href = '/'}
+            className="flex items-center space-x-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Voltar ao Site</span>
+          </Button>
+        </div>
+
         {/* Pets Cards */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {pets.length > 0 ? pets.map((pet) => (
@@ -222,63 +241,83 @@ const MeuPet = () => {
           )}
         </div>
 
-        {/* Histórico de Agendamentos */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Calendar className="w-5 h-5" />
-              <span>Histórico de Serviços</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {agendamentos.length > 0 ? (
-              <div className="space-y-4">
-                {agendamentos.map((agendamento) => {
-                  const pet = pets.find(p => p.cdPet === agendamento.cdPet);
-                  return (
-                    <div 
-                      key={agendamento.cdAgendamento}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-                    >
-                      <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <Scissors className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <h4 className="font-medium">
-                            {agendamento.servico?.dsservico || 'Serviço não identificado'}
-                          </h4>
-                          <p className="text-sm text-gray-600">
-                            Pet: {pet?.nmPet} • {formatDateTime(agendamento.dtStart)}
-                          </p>
-                        </div>
-                      </div>
-                      <Badge 
-                        variant={agendamento.flComparecimento ? "default" : "secondary"}
-                        className={agendamento.flComparecimento ? "bg-green-600" : ""}
+        {/* Seletor de Pet para Histórico */}
+        {pets.length > 0 && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center space-x-2">
+                  <Calendar className="w-5 h-5" />
+                  <span>Histórico de Serviços</span>
+                </CardTitle>
+                <Select value={selectedPetId} onValueChange={setSelectedPetId}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Selecionar pet" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os pets</SelectItem>
+                    {pets.map((pet) => (
+                      <SelectItem key={pet.cdPet} value={pet.cdPet.toString()}>
+                        {pet.nmPet}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {filteredAgendamentos.length > 0 ? (
+                <div className="space-y-4">
+                  {filteredAgendamentos.map((agendamento) => {
+                    const pet = pets.find(p => p.cdPet === agendamento.cdPet);
+                    return (
+                      <div 
+                        key={agendamento.cdAgendamento}
+                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
                       >
-                        {agendamento.flComparecimento ? "Realizado" : "Agendado"}
-                      </Badge>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <CalendarIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-700 mb-2">
-                  Nenhum serviço encontrado
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  Seu pet ainda não tem histórico de serviços.
-                </p>
-                <Button onClick={() => window.location.href = '/agendamento'}>
-                  Agendar Serviço
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                        <div className="flex items-center space-x-4">
+                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <Scissors className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium">
+                              {agendamento.servico?.dsservico || 'Serviço não identificado'}
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              Pet: {pet?.nmPet} • {formatDateTime(agendamento.dtStart)}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge 
+                          variant={agendamento.flComparecimento ? "default" : "secondary"}
+                          className={agendamento.flComparecimento ? "bg-green-600" : ""}
+                        >
+                          {agendamento.flComparecimento ? "Realizado" : "Agendado"}
+                        </Badge>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <CalendarIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-700 mb-2">
+                    Nenhum serviço encontrado
+                  </h3>
+                  <p className="text-gray-500 mb-4">
+                    {selectedPetId === 'all' 
+                      ? 'Seus pets ainda não têm histórico de serviços.'
+                      : `${pets.find(p => p.cdPet.toString() === selectedPetId)?.nmPet || 'Este pet'} ainda não tem histórico de serviços.`
+                    }
+                  </p>
+                  <Button onClick={() => window.location.href = '/agendamento'}>
+                    Agendar Serviço
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Estatísticas */}
         <div className="grid md:grid-cols-3 gap-6">
