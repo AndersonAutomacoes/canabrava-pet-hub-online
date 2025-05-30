@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -130,15 +129,34 @@ const Agendamento = () => {
       const startDateTime = new Date(selectedDate);
       startDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
       
+      // Buscar dados do pet
+      const { data: petData } = await supabase
+        .from('Pet')
+        .select('nmPet')
+        .eq('cdPet', parseInt(selectedPet))
+        .single();
+
       // Criar agendamentos para cada serviço selecionado
       const agendamentos = [];
       for (const servicoId of selectedServicos) {
         const endDateTime = new Date(startDateTime);
         endDateTime.setHours(startDateTime.getHours() + 1);
 
+        // Obter próximo ID para agendamento
+        const { data: maxAgendamentoData } = await supabase
+          .from('Agendamento')
+          .select('cdAgendamento')
+          .order('cdAgendamento', { ascending: false })
+          .limit(1);
+
+        const nextAgendamentoId = maxAgendamentoData && maxAgendamentoData.length > 0 
+          ? maxAgendamentoData[0].cdAgendamento + 1 
+          : 1;
+
         const { data, error } = await supabase
           .from('Agendamento')
           .insert({
+            cdAgendamento: nextAgendamentoId,
             cdEmpresa: 1,
             cdCliente: clienteId,
             cdPet: parseInt(selectedPet),
@@ -152,6 +170,46 @@ const Agendamento = () => {
         if (error) throw error;
         agendamentos.push(data);
 
+        // Buscar dados do serviço
+        const { data: servicoData } = await supabase
+          .from('servico')
+          .select('dsservico')
+          .eq('cdservico', parseInt(servicoId))
+          .single();
+
+        // Enviar email de confirmação
+        try {
+          await supabase.functions.invoke('send-appointment-email', {
+            body: {
+              agendamentoId: nextAgendamentoId,
+              clienteEmail: user.email,
+              petNome: petData?.nmPet || 'Pet',
+              servicoNome: servicoData?.dsservico || 'Serviço',
+              dataHora: startDateTime.toISOString()
+            }
+          });
+          console.log('Email de confirmação enviado');
+        } catch (emailError) {
+          console.error('Erro ao enviar email:', emailError);
+        }
+
+        // Criar evento no Google Calendar
+        try {
+          await supabase.functions.invoke('create-calendar-event', {
+            body: {
+              petNome: petData?.nmPet || 'Pet',
+              servicoNome: servicoData?.dsservico || 'Serviço',
+              clienteNome: user.email?.split('@')[0] || 'Cliente',
+              dataInicio: startDateTime.toISOString(),
+              dataFim: endDateTime.toISOString(),
+              observacoes: observacoes
+            }
+          });
+          console.log('Evento criado no Google Calendar');
+        } catch (calendarError) {
+          console.error('Erro ao criar evento no Google Calendar:', calendarError);
+        }
+
         // Incrementar horário para próximo serviço (se houver)
         startDateTime.setHours(startDateTime.getHours() + 1);
       }
@@ -160,7 +218,7 @@ const Agendamento = () => {
 
       toast({
         title: "Agendamentos realizados!",
-        description: `${selectedServicos.length} agendamento(s) criado(s) com sucesso.`,
+        description: `${selectedServicos.length} agendamento(s) criado(s) com sucesso. Verifique seu email para confirmação.`,
       });
 
     } catch (error) {

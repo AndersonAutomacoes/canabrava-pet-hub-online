@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,6 +12,7 @@ interface CartItem {
     preco: number;
     imagens: string[];
     peso?: number;
+    estoque?: number;
   };
 }
 
@@ -37,7 +37,8 @@ export const useCart = () => {
             nome,
             preco,
             imagens,
-            peso
+            peso,
+            estoque
           )
         `)
         .eq('user_id', user.id);
@@ -70,6 +71,15 @@ export const useCart = () => {
     }
 
     try {
+      // Verificar estoque do produto
+      const { data: produto, error: produtoError } = await supabase
+        .from('produtos')
+        .select('estoque')
+        .eq('id', produtoId)
+        .single();
+
+      if (produtoError) throw produtoError;
+
       // Verificar se o item já existe no carrinho
       const { data: existingItem } = await supabase
         .from('carrinho')
@@ -78,11 +88,22 @@ export const useCart = () => {
         .eq('produto_id', produtoId)
         .single();
 
+      const novaQuantidade = existingItem ? existingItem.quantidade + quantidade : quantidade;
+
+      if (novaQuantidade > produto.estoque) {
+        toast({
+          title: "Estoque insuficiente",
+          description: `Apenas ${produto.estoque} unidades disponíveis em estoque.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
       if (existingItem) {
         // Atualizar quantidade se já existe
         const { error } = await supabase
           .from('carrinho')
-          .update({ quantidade: existingItem.quantidade + quantidade })
+          .update({ quantidade: novaQuantidade })
           .eq('id', existingItem.id);
 
         if (error) throw error;
@@ -148,6 +169,19 @@ export const useCart = () => {
     }
 
     try {
+      // Buscar dados do item para verificar estoque
+      const item = cartItems.find(item => item.id === itemId);
+      if (!item) return;
+
+      if (quantidade > item.produto.estoque) {
+        toast({
+          title: "Estoque insuficiente",
+          description: `Apenas ${item.produto.estoque} unidades disponíveis em estoque.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from('carrinho')
         .update({ quantidade })

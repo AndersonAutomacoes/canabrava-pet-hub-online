@@ -1,9 +1,11 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Plus, Minus, Trash2, Package, Truck } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, Package, Truck, AlertTriangle } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { useToast } from '@/hooks/use-toast';
 
 const CartSummary = () => {
   const { 
@@ -14,6 +16,23 @@ const CartSummary = () => {
     getCartTotal, 
     getCartItemsCount 
   } = useCart();
+  const { toast } = useToast();
+
+  const handleQuantityIncrease = (item: any) => {
+    if (item.quantidade >= item.produto.estoque) {
+      toast({
+        title: "Estoque insuficiente",
+        description: `Apenas ${item.produto.estoque} unidades disponíveis em estoque.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    updateQuantity(item.id, item.quantidade + 1);
+  };
+
+  const handleQuantityDecrease = (item: any) => {
+    updateQuantity(item.id, item.quantidade - 1);
+  };
 
   if (loading) {
     return (
@@ -75,6 +94,17 @@ const CartSummary = () => {
                   <p className="text-green-600 font-bold text-lg">
                     R$ {item.produto.preco.toFixed(2)}
                   </p>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <span className="text-sm text-gray-500">
+                      Estoque: {item.produto.estoque}
+                    </span>
+                    {item.produto.estoque <= 5 && (
+                      <div className="flex items-center text-amber-600">
+                        <AlertTriangle className="w-3 h-3 mr-1" />
+                        <span className="text-xs">Estoque baixo</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex items-center space-x-3 bg-white rounded-lg p-2 shadow-sm">
@@ -82,7 +112,7 @@ const CartSummary = () => {
                     variant="outline"
                     size="icon"
                     className="h-8 w-8 rounded-lg border-gray-200 hover:bg-red-50 hover:border-red-200 hover:text-red-600"
-                    onClick={() => updateQuantity(item.id, item.quantidade - 1)}
+                    onClick={() => handleQuantityDecrease(item)}
                     disabled={item.quantidade <= 1}
                   >
                     <Minus className="w-3 h-3" />
@@ -96,7 +126,8 @@ const CartSummary = () => {
                     variant="outline"
                     size="icon"
                     className="h-8 w-8 rounded-lg border-gray-200 hover:bg-green-50 hover:border-green-200 hover:text-green-600"
-                    onClick={() => updateQuantity(item.id, item.quantidade + 1)}
+                    onClick={() => handleQuantityIncrease(item)}
+                    disabled={item.quantidade >= item.produto.estoque}
                   >
                     <Plus className="w-3 h-3" />
                   </Button>
