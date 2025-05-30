@@ -1,9 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface CEPData {
@@ -18,14 +17,17 @@ interface CEPData {
 interface CEPAutoCompleteProps {
   onAddressComplete: (address: CEPData) => void;
   initialCep?: string;
+  onCepChange?: (cep: string) => void;
 }
 
 export const CEPAutoComplete: React.FC<CEPAutoCompleteProps> = ({ 
   onAddressComplete, 
-  initialCep = '' 
+  initialCep = '',
+  onCepChange
 }) => {
   const [cep, setCep] = useState(initialCep);
   const [loading, setLoading] = useState(false);
+  const [lastSearchedCep, setLastSearchedCep] = useState('');
   const { toast } = useToast();
 
   const formatCEP = (value: string) => {
@@ -43,25 +45,25 @@ export const CEPAutoComplete: React.FC<CEPAutoCompleteProps> = ({
   const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formattedCep = formatCEP(e.target.value);
     setCep(formattedCep);
+    
+    // Notificar o componente pai sobre a mudança do CEP
+    if (onCepChange) {
+      onCepChange(formattedCep);
+    }
   };
 
-  const fetchAddressByCEP = async () => {
-    const cleanCep = cep.replace(/\D/g, '');
+  const fetchAddressByCEP = async (cepToSearch: string) => {
+    const cleanCep = cepToSearch.replace(/\D/g, '');
     
-    if (cleanCep.length !== 8) {
-      toast({
-        title: "CEP inválido",
-        description: "Por favor, digite um CEP válido com 8 dígitos.",
-        variant: "destructive",
-      });
+    // Não buscar se for o mesmo CEP já pesquisado ou se for inválido
+    if (cleanCep.length !== 8 || cleanCep === lastSearchedCep) {
       return;
     }
 
     setLoading(true);
     try {
-      console.log('Buscando CEP:', cleanCep);
+      console.log('Buscando CEP automaticamente:', cleanCep);
       
-      // Usar proxy CORS para contornar problemas de CSP
       const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`, {
         method: 'GET',
         headers: {
@@ -85,6 +87,7 @@ export const CEPAutoComplete: React.FC<CEPAutoCompleteProps> = ({
         return;
       }
 
+      setLastSearchedCep(cleanCep);
       onAddressComplete(data);
       
       toast({
@@ -95,7 +98,7 @@ export const CEPAutoComplete: React.FC<CEPAutoCompleteProps> = ({
       console.error('Erro ao buscar CEP:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível buscar o endereço. Tente novamente ou preencha manualmente.",
+        description: "Não foi possível buscar o endereço. Verifique o CEP e tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -103,42 +106,58 @@ export const CEPAutoComplete: React.FC<CEPAutoCompleteProps> = ({
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      fetchAddressByCEP();
+  const handleCepBlur = () => {
+    const cleanCep = cep.replace(/\D/g, '');
+    if (cleanCep.length === 8) {
+      fetchAddressByCEP(cep);
     }
   };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Tab' || e.key === 'Enter') {
+      const cleanCep = cep.replace(/\D/g, '');
+      if (cleanCep.length === 8) {
+        fetchAddressByCEP(cep);
+      }
+    }
+  };
+
+  // Effect para buscar CEP quando o valor inicial mudar
+  useEffect(() => {
+    if (initialCep && initialCep !== cep) {
+      setCep(initialCep);
+    }
+  }, [initialCep]);
 
   return (
     <div className="space-y-2">
       <Label htmlFor="cep" className="text-slate-700 font-medium">
         CEP *
       </Label>
-      <div className="flex gap-2">
+      <div className="relative">
         <Input
           id="cep"
           type="text"
           placeholder="00000-000"
           value={cep}
           onChange={handleCepChange}
-          onKeyPress={handleKeyPress}
+          onBlur={handleCepBlur}
+          onKeyDown={handleKeyPress}
           maxLength={9}
-          className="flex-1 bg-white border-slate-300 focus:border-green-500 focus:ring-green-500"
+          className="bg-white border-slate-300 focus:border-green-500 focus:ring-green-500 pr-10"
+          disabled={loading}
         />
-        <Button
-          type="button"
-          onClick={fetchAddressByCEP}
-          disabled={loading || cep.replace(/\D/g, '').length !== 8}
-          variant="outline"
-          size="icon"
-          className="border-slate-300 hover:bg-green-50 hover:border-green-400"
-        >
-          <Search className="w-4 h-4" />
-        </Button>
+        {loading && (
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+            <Loader2 className="w-4 h-4 animate-spin text-green-600" />
+          </div>
+        )}
       </div>
       <p className="text-xs text-slate-500">
-        Digite o CEP e clique na lupa para preencher automaticamente
+        {loading 
+          ? 'Buscando endereço...' 
+          : 'Digite o CEP completo para buscar automaticamente'
+        }
       </p>
     </div>
   );

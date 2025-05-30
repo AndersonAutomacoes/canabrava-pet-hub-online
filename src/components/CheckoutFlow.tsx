@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -53,6 +52,13 @@ const CheckoutFlow = () => {
       endereco: `${addressData.logradouro}, ${addressData.bairro}`,
       cidade: addressData.localidade,
       estado: addressData.uf
+    }));
+  };
+
+  const handleCepChange = (cep: string) => {
+    setDeliveryAddress(prev => ({
+      ...prev,
+      cep: cep
     }));
   };
 
@@ -289,6 +295,7 @@ const CheckoutFlow = () => {
                 <CardContent className="space-y-4">
                   <CEPAutoComplete 
                     onAddressComplete={handleAddressComplete}
+                    onCepChange={handleCepChange}
                     initialCep={deliveryAddress.cep}
                   />
                   
